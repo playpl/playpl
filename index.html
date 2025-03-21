@@ -2,6 +2,7 @@
 <html dir="rtl" lang="ar">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>مراجعة الاختبارات اللفظية</title>
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
     <style>
@@ -28,12 +29,14 @@
             background-color: var(--background);
             color: var(--text-color);
             min-height: 100vh;
+            font-size: 16px;
         }
 
         .container {
+            width: 100%;
             max-width: 800px;
             margin: 0 auto;
-            padding: 2rem 1rem;
+            padding: 1rem;
         }
 
         .page {
@@ -55,10 +58,10 @@
             background: var(--card-bg);
             border: 2px solid var(--primary-color);
             border-radius: 15px;
-            padding: 1.5rem;
+            padding: 1rem;
             color: var(--text-color);
-            font-size: 1.1rem;
-            margin: 2rem 0;
+            font-size: 1rem;
+            margin: 1rem 0;
             resize: vertical;
             line-height: 1.6;
         }
@@ -82,7 +85,7 @@
         .progress-text {
             text-align: center;
             margin-top: 0.5rem;
-            font-size: 1rem;
+            font-size: 0.875rem;
             color: var(--text-color);
             font-weight: bold;
         }
@@ -90,41 +93,48 @@
         .question-card {
             background: var(--card-bg);
             border-radius: 15px;
-            padding: 2rem;
-            margin: 2rem 0;
+            padding: 1.5rem 1rem;
+            margin: 1rem 0;
             position: relative;
+        }
+
+        .question-card h2 {
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+            margin-top: 0.5rem;
         }
 
         .timer {
             position: absolute;
-            top: 1rem;
-            left: 1rem;
+            top: 0.5rem;
+            left: 0.5rem;
             background: var(--primary-color);
-            padding: 0.5rem 1rem;
+            padding: 0.25rem 0.5rem;
             border-radius: 20px;
-            font-size: 0.9rem;
+            font-size: 0.8rem;
         }
 
         .total-timer {
             text-align: center;
-            margin-bottom: 1rem;
-            font-size: 1.2rem;
+            margin-bottom: 0.5rem;
+            font-size: 1rem;
         }
 
         .options-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 1rem;
-            margin-top: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            margin-top: 1rem;
         }
 
         .option {
             background: var(--card-bg);
             border: 2px solid var(--secondary-color);
-            padding: 1rem;
+            padding: 0.75rem;
             border-radius: 8px;
             cursor: pointer;
             transition: all 0.3s ease;
+            font-size: 0.95rem;
         }
 
         .option:hover {
@@ -143,19 +153,19 @@
 
         .navigation-buttons {
             display: flex;
-            gap: 1rem;
-            margin-top: 2rem;
+            gap: 0.75rem;
+            margin-top: 1.5rem;
         }
 
         .nav-btn {
             flex: 1;
-            padding: 1rem;
+            padding: 0.75rem;
             border: none;
             border-radius: 10px;
             cursor: pointer;
             background: var(--primary-color);
             color: white;
-            font-size: 1.1rem;
+            font-size: 1rem;
             transition: all 0.2s;
         }
 
@@ -169,34 +179,28 @@
         }
 
         .results-page {
-            padding: 2rem;
+            padding: 1rem 0;
         }
 
         .score-summary {
             display: flex;
-            flex-direction: row;
-            justify-content: space-between;
-            gap: 2rem;
-            padding: 2rem;
+            flex-direction: column;
+            padding: 1rem;
             background: var(--card-bg);
             border-radius: 15px;
-            margin-bottom: 2rem;
+            margin-bottom: 1.5rem;
             box-shadow: 0 4px 20px rgba(0,0,0,0.2);
         }
 
         .stats-grid {
             display: flex;
-            flex-direction: row;
-            justify-content: space-between;
-            gap: 2rem;
+            flex-direction: column;
+            gap: 1rem;
             margin: 0;
-            flex: 1;
         }
 
         .stat-box {
-            flex: 1;
-            min-width: 200px;
-            padding: 1.5rem;
+            padding: 1rem;
             border-radius: 10px;
             text-align: center;
         }
@@ -217,30 +221,27 @@
         }
 
         .marked-section {
-            margin-top: 2rem;
+            margin-top: 1.5rem;
         }
 
         .wrong-questions-section {
-            margin-top: 2rem;
+            margin-top: 1.5rem;
         }
 
         #markedQuestionsDetails,
         #wrongQuestionsDetails {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            display: flex;
+            flex-direction: column;
             gap: 1rem;
         }
 
         .question-details {
             background: var(--card-bg);
             border-radius: 15px;
-            padding: 1.5rem;
-            margin: 1rem 0;
+            padding: 1rem;
+            margin: 0.75rem 0;
             position: relative;
             overflow: hidden;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
         }
 
         .question-details.marked {
@@ -259,12 +260,18 @@
             border: 2px solid var(--unanswered);
         }
 
+        .question-header h4 {
+            font-size: 0.95rem;
+            margin-right: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
         .status-indicator {
-            width: 10px;
-            height: 10px;
+            width: 8px;
+            height: 8px;
             border-radius: 50%;
             display: inline-block;
-            margin-left: 0.5rem;
+            margin-right: 0.5rem;
         }
 
         .correct .status-indicator { background: var(--correct); }
@@ -274,38 +281,36 @@
         .answer-section {
             display: flex;
             flex-direction: column;
-            gap: 1rem;
-            margin-top: 1rem;
-            flex: 1;
-            justify-content: space-between;
+            gap: 0.75rem;
+            margin-top: 0.75rem;
+        }
+
+        .user-answer, .correct-answer, .unanswered-answer {
+            padding: 0.75rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
         }
 
         .user-answer {
             background: rgba(213, 0, 0, 0.1);
             border: 2px solid var(--wrong);
-            padding: 1rem;
-            border-radius: 8px;
         }
 
         .correct-answer {
             background: rgba(0, 200, 83, 0.1);
             border: 2px solid var(--correct);
-            padding: 1rem;
-            border-radius: 8px;
         }
 
         .unanswered-answer {
             background: rgba(245, 158, 11, 0.1);
             border: 2px solid var(--unanswered);
-            padding: 1rem;
-            border-radius: 8px;
         }
 
         .circular-progress {
             position: relative;
-            width: 120px;
-            height: 120px;
-            margin: 1rem auto;
+            width: 80px;
+            height: 80px;
+            margin: 0.5rem auto;
         }
 
         .circular-progress svg {
@@ -315,7 +320,7 @@
 
         .circular-progress circle {
             fill: none;
-            stroke-width: 10;
+            stroke-width: 8;
             stroke-linecap: round;
             transform: translate(5px, 5px);
         }
@@ -326,8 +331,8 @@
 
         .circular-progress circle.progress {
             stroke: var(--primary-color);
-            stroke-dasharray: 314;
-            stroke-dashoffset: 314;
+            stroke-dasharray: 210;
+            stroke-dashoffset: 210;
             transition: stroke-dashoffset 0.5s ease;
         }
 
@@ -336,7 +341,7 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            font-size: 1.5rem;
+            font-size: 1.1rem;
             font-weight: bold;
         }
 
@@ -344,15 +349,15 @@
             background: var(--primary-color);
             color: white;
             border: none;
-            padding: 0.5rem 1rem;
+            padding: 0.25rem 0.5rem;
             border-radius: 5px;
             cursor: pointer;
-            font-size: 0.9rem;
+            font-size: 0.8rem;
             margin-right: 0.5rem;
             transition: opacity 0.3s;
             display: flex;
             align-items: center;
-            gap: 0.5rem;
+            gap: 0.25rem;
         }
 
         .copy-btn:hover {
@@ -360,21 +365,21 @@
         }
 
         .copy-btn svg {
-            width: 16px;
-            height: 16px;
+            width: 14px;
+            height: 14px;
             fill: white;
         }
 
         .mark-btn {
             position: absolute;
-            top: 1rem;
-            left: 1rem;
+            top: 0.5rem;
+            left: 0.5rem;
             background: none;
             border: none;
             cursor: pointer;
             padding: 0;
-            width: 32px;
-            height: 32px;
+            width: 28px;
+            height: 28px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -386,8 +391,8 @@
         }
 
         .mark-btn svg {
-            width: 28px;
-            height: 28px;
+            width: 24px;
+            height: 24px;
             fill: var(--marked);
             filter: drop-shadow(0 0 2px rgba(255, 215, 0, 0.5));
         }
@@ -408,19 +413,76 @@
             background: var(--primary-color);
             color: white;
             border: none;
-            padding: 0.5rem 1rem;
+            padding: 0.5rem 0.75rem;
             border-radius: 20px;
             cursor: pointer;
             margin: 1rem 0;
             display: flex;
             align-items: center;
             gap: 0.5rem;
+            font-size: 0.9rem;
         }
 
         .copy-all-btn svg {
-            width: 16px;
-            height: 16px;
+            width: 14px;
+            height: 14px;
             fill: white;
+        }
+
+        /* Responsive adjustments */
+        @media (min-width: 768px) {
+            .container {
+                padding: 2rem 1rem;
+            }
+
+            .options-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            }
+
+            .stats-grid {
+                flex-direction: row;
+                justify-content: space-between;
+            }
+
+            .score-summary {
+                padding: 1.5rem;
+            }
+
+            .circular-progress {
+                width: 100px;
+                height: 100px;
+            }
+
+            .circular-progress circle.progress {
+                stroke-dasharray: 280;
+                stroke-dashoffset: 280;
+            }
+
+            .circular-progress .percentage {
+                font-size: 1.3rem;
+            }
+
+            #markedQuestionsDetails,
+            #wrongQuestionsDetails {
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            }
+
+            .question-card h2 {
+                font-size: 1.2rem;
+            }
+        }
+
+        /* Fix for better touch experience */
+        @media (hover: none) {
+            .option:hover {
+                border-color: var(--secondary-color);
+            }
+
+            .option:active {
+                border-color: var(--primary-color);
+            }
         }
     </style>
 </head>
@@ -434,7 +496,7 @@
         <div class="page quiz-page">
             <div class="progress-bar">
                 <div class="progress-bar-fill" id="progressBarFill"></div>
-                <div class="progress-text" id="progressText">الأسئلة المحلولة: 0/5 | المتبقية: 5 | النسبة: 0%</div>
+                <div class="progress-text" id="progressText">الأسئلة المحلولة: 0/0</div>
             </div>
             <div class="total-timer" id="totalTimer">الوقت المتبقي: 00:00</div>
             <div id="questionsContainer"></div>
@@ -450,8 +512,8 @@
                     <div class="stat-box correct-stat">
                         <div class="circular-progress">
                             <svg>
-                                <circle class="bg" cx="55" cy="55" r="50"></circle>
-                                <circle class="progress" cx="55" cy="55" r="50"></circle>
+                                <circle class="bg" cx="35" cy="35" r="30"></circle>
+                                <circle class="progress" cx="35" cy="35" r="30"></circle>
                             </svg>
                             <div class="percentage" id="correctPercentage">0%</div>
                         </div>
@@ -460,8 +522,8 @@
                     <div class="stat-box wrong-stat">
                         <div class="circular-progress">
                             <svg>
-                                <circle class="bg" cx="55" cy="55" r="50"></circle>
-                                <circle class="progress" cx="55" cy="55" r="50"></circle>
+                                <circle class="bg" cx="35" cy="35" r="30"></circle>
+                                <circle class="progress" cx="35" cy="35" r="30"></circle>
                             </svg>
                             <div class="percentage" id="wrongPercentage">0%</div>
                         </div>
@@ -470,8 +532,8 @@
                     <div class="stat-box unanswered-stat">
                         <div class="circular-progress">
                             <svg>
-                                <circle class="bg" cx="55" cy="55" r="50"></circle>
-                                <circle class="progress" cx="55" cy="55" r="50"></circle>
+                                <circle class="bg" cx="35" cy="35" r="30"></circle>
+                                <circle class="progress" cx="35" cy="35" r="30"></circle>
                             </svg>
                             <div class="percentage" id="unansweredPercentage">0%</div>
                         </div>
@@ -487,13 +549,13 @@
                         <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7v2H5v14h14v-7h2v7a2 2 0 0 1-2 2z"/>
                         <path d="M19 7h-2V5h2v2zm-4 0h-2V5h2v2zm-4 0H9V5h2v2zm8 4h-2V9h2v2zm-4 0h-2V9h2v2zm-4 0H9V9h2v2z"/>
                     </svg>
-                    نسخ جميع الأسئلة المعلّمة
+                    نسخ الأسئلة المعلّمة
                 </button>
                 <div id="markedQuestionsDetails"></div>
             </div>
 
             <div class="wrong-questions-section">
-                <h3>تفاصيل الأسئلة الخاطئة وغير المجابة:</h3>
+                <h3>الأسئلة الخاطئة وغير المجابة:</h3>
                 <div id="wrongQuestionsDetails"></div>
             </div>
             
