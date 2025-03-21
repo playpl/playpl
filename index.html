@@ -14,6 +14,7 @@
             --correct: #00C853;
             --wrong: #D50000;
             --unanswered: #F59E0B;
+            --marked: #FFD700;
         }
 
         * {
@@ -155,6 +156,11 @@
             background: var(--primary-color);
             color: white;
             font-size: 1.1rem;
+            transition: all 0.2s;
+        }
+
+        .nav-btn:hover {
+            filter: brightness(1.1);
         }
 
         .nav-btn:disabled {
@@ -210,10 +216,15 @@
             border: 2px solid var(--unanswered);
         }
 
+        .marked-section {
+            margin-top: 2rem;
+        }
+
         .wrong-questions-section {
             margin-top: 2rem;
         }
 
+        #markedQuestionsDetails,
         #wrongQuestionsDetails {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -230,6 +241,10 @@
             height: 100%;
             display: flex;
             flex-direction: column;
+        }
+
+        .question-details.marked {
+            border: 2px solid var(--marked);
         }
 
         .question-details.correct {
@@ -324,6 +339,89 @@
             font-size: 1.5rem;
             font-weight: bold;
         }
+
+        .copy-btn {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            margin-right: 0.5rem;
+            transition: opacity 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .copy-btn:hover {
+            opacity: 0.8;
+        }
+
+        .copy-btn svg {
+            width: 16px;
+            height: 16px;
+            fill: white;
+        }
+
+        .mark-btn {
+            position: absolute;
+            top: 1rem;
+            left: 1rem;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.2s;
+        }
+
+        .mark-btn:hover {
+            transform: scale(1.1);
+        }
+
+        .mark-btn svg {
+            width: 28px;
+            height: 28px;
+            fill: var(--marked);
+            filter: drop-shadow(0 0 2px rgba(255, 215, 0, 0.5));
+        }
+
+        .mark-btn.marked svg {
+            fill: var(--marked);
+            stroke: #000;
+            stroke-width: 1px;
+        }
+
+        .mark-btn:not(.marked) svg {
+            fill: transparent;
+            stroke: var(--marked);
+            stroke-width: 2px;
+        }
+
+        .copy-all-btn {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            cursor: pointer;
+            margin: 1rem 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .copy-all-btn svg {
+            width: 16px;
+            height: 16px;
+            fill: white;
+        }
     </style>
 </head>
 <body>
@@ -382,6 +480,18 @@
                 </div>
             </div>
 
+            <div class="marked-section">
+                <h3>الأسئلة المعلّمة:</h3>
+                <button class="copy-all-btn" onclick="quizApp.copyAllMarked()">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7v2H5v14h14v-7h2v7a2 2 0 0 1-2 2z"/>
+                        <path d="M19 7h-2V5h2v2zm-4 0h-2V5h2v2zm-4 0H9V5h2v2zm8 4h-2V9h2v2zm-4 0h-2V9h2v2zm-4 0H9V9h2v2z"/>
+                    </svg>
+                    نسخ جميع الأسئلة المعلّمة
+                </button>
+                <div id="markedQuestionsDetails"></div>
+            </div>
+
             <div class="wrong-questions-section">
                 <h3>تفاصيل الأسئلة الخاطئة وغير المجابة:</h3>
                 <div id="wrongQuestionsDetails"></div>
@@ -396,6 +506,7 @@
             quizData: [],
             currentQuestion: 0,
             userAnswers: [],
+            markedQuestions: new Set(),
             questionTimer: null,
             totalTimer: null,
             totalTime: 0,
@@ -408,12 +519,11 @@
                 this.quizData = this.parseQuizText(input);
                 if (this.quizData.length === 0) return alert('تنسيق غير صحيح!');
                 
-                // خلط ترتيب الأسئلة
                 this.shuffleArray(this.quizData);
                 
                 this.userAnswers = new Array(this.quizData.length).fill(-1);
                 this.currentQuestion = 0;
-                this.totalTime = this.quizData.length * 60;
+                this.totalTime = this.quizData.length * 15;
                 this.startTime = Date.now();
                 
                 this.switchPage('quiz-page');
@@ -422,7 +532,6 @@
                 this.renderQuestion();
             },
 
-            // دالة مساعدة لخلط المصفوفات
             shuffleArray(array) {
                 for (let i = array.length - 1; i > 0; i--) {
                     const j = Math.floor(Math.random() * (i + 1));
@@ -433,7 +542,8 @@
             parseQuizText(text) {
                 return text.split(/==+/g)
                     .map(section => {
-                        const lines = section.trim().split('\n')
+                        const trimmedSection = section.trim();
+                        const lines = trimmedSection.split('\n')
                             .map(l => l.trim())
                             .filter(l => l);
 
@@ -444,12 +554,12 @@
                             correct: opt.includes('*')
                         }));
 
-                        // خلط الخيارات
                         this.shuffleArray(options);
 
                         return {
                             question: lines[0],
-                            options: options
+                            options: options,
+                            rawQuestion: trimmedSection
                         };
                     })
                     .filter(q => q && q.options.length >= 2 && q.options.filter(o => o.correct).length === 1);
@@ -465,7 +575,12 @@
                 const questionDiv = document.createElement('div');
                 questionDiv.className = 'question-card';
                 questionDiv.innerHTML = `
-                    <div class="timer" id="questionTimer">60</div>
+                    <div class="timer" id="questionTimer">15</div>
+                    <button class="mark-btn ${this.markedQuestions.has(this.currentQuestion) ? 'marked' : ''}" id="markBtn">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
+                        </svg>
+                    </button>
                     <h2>${question.question}</h2>
                     <div class="options-grid"></div>
                 `;
@@ -478,9 +593,21 @@
                     questionDiv.querySelector('.options-grid').appendChild(optionDiv);
                 });
 
+                const markBtn = questionDiv.querySelector('#markBtn');
+                markBtn.onclick = () => this.toggleMarkQuestion();
+
                 container.appendChild(questionDiv);
                 this.updateNavigationButtons();
                 this.startQuestionTimer();
+            },
+
+            toggleMarkQuestion() {
+                if (this.markedQuestions.has(this.currentQuestion)) {
+                    this.markedQuestions.delete(this.currentQuestion);
+                } else {
+                    this.markedQuestions.add(this.currentQuestion);
+                }
+                this.renderQuestion();
             },
 
             handleAnswer(index, isCorrect) {
@@ -512,7 +639,7 @@
             },
 
             startQuestionTimer() {
-                let timeLeft = 60;
+                let timeLeft = 15;
                 const timerElement = document.getElementById('questionTimer');
                 
                 this.questionTimer = setInterval(() => {
@@ -537,8 +664,8 @@
                         return;
                     }
                     
-                    const minutes = Math.floor(remaining / 60).toString().padStart(2, '0');
-                    const seconds = (remaining % 60).toString().padStart(2, '0');
+                    const minutes = Math.floor(remaining / 15).toString().padStart(2, '0');
+                    const seconds = (remaining % 15).toString().padStart(2, '0');
                     document.getElementById('totalTimer').textContent = `الوقت المتبقي: ${minutes}:${seconds}`;
                 }, 1000);
             },
@@ -575,13 +702,14 @@
                 clearInterval(this.totalTimer);
                 clearInterval(this.questionTimer);
                 
-                const correctAnswers = this.userAnswers.filter((ans, index) => {
-                    return ans !== -1 && this.quizData[index].options[ans].correct;
-                }).length;
+                // Update stats
+                const correctAnswers = this.userAnswers.filter((ans, index) => 
+                    ans !== -1 && this.quizData[index].options[ans].correct
+                ).length;
                 
-                const wrongAnswers = this.userAnswers.filter((ans, index) => {
-                    return ans !== -1 && !this.quizData[index].options[ans].correct;
-                }).length;
+                const wrongAnswers = this.userAnswers.filter((ans, index) => 
+                    ans !== -1 && !this.quizData[index].options[ans].correct
+                ).length;
                 
                 const unanswered = this.userAnswers.filter(ans => ans === -1).length;
                 const totalQuestions = this.quizData.length;
@@ -590,42 +718,81 @@
                 this.updateCircularProgress('wrongPercentage', (wrongAnswers/totalQuestions)*100);
                 this.updateCircularProgress('unansweredPercentage', (unanswered/totalQuestions)*100);
                 
-                const container = document.getElementById('wrongQuestionsDetails');
-                container.innerHTML = '';
-                
+                // Render marked questions
+                const markedContainer = document.getElementById('markedQuestionsDetails');
+                markedContainer.innerHTML = '';
+                this.markedQuestions.forEach(index => {
+                    const question = this.quizData[index];
+                    const cardDiv = this.createQuestionDetails(question, index, 'marked');
+                    markedContainer.appendChild(cardDiv);
+                });
+
+                // Render wrong/unanswered questions
+                const wrongContainer = document.getElementById('wrongQuestionsDetails');
+                wrongContainer.innerHTML = '';
                 this.userAnswers.forEach((userAnswer, index) => {
                     const question = this.quizData[index];
-                    const correctOption = question.options.find(opt => opt.correct);
                     const isCorrect = userAnswer !== -1 && question.options[userAnswer].correct;
                     const isUnanswered = userAnswer === -1;
                     
-                    if (!isCorrect) {
-                        const cardDiv = document.createElement('div');
-                        cardDiv.className = `question-details ${isUnanswered ? 'unanswered' : 'wrong'}`;
-                        
-                        const answerDetails = `
-                            <h4>
-                                ${question.question}
-                                <span class="status-indicator"></span>
-                            </h4>
-                            <div class="answer-section">
-                                <div class="${isUnanswered ? 'unanswered-answer' : 'user-answer'}">
-                                    <strong>إجابتك:</strong>
-                                    <p>${isUnanswered ? 'لم يتم الإجابة' : question.options[userAnswer].text}</p>
-                                </div>
-                                <div class="correct-answer">
-                                    <strong>الإجابة الصحيحة:</strong>
-                                    <p>${correctOption.text}</p>
-                                </div>
-                            </div>
-                        `;
-                        
-                        cardDiv.innerHTML = answerDetails;
-                        container.appendChild(cardDiv);
+                    if (!isCorrect && !this.markedQuestions.has(index)) {
+                        const cardDiv = this.createQuestionDetails(question, index, isUnanswered ? 'unanswered' : 'wrong');
+                        wrongContainer.appendChild(cardDiv);
                     }
                 });
 
                 this.switchPage('results-page');
+            },
+
+            createQuestionDetails(question, index, status) {
+                const correctOption = question.options.find(opt => opt.correct);
+                const userAnswer = this.userAnswers[index];
+                const isUnanswered = userAnswer === -1;
+
+                const cardDiv = document.createElement('div');
+                cardDiv.className = `question-details ${status}`;
+
+                const answerDetails = `
+                    <div class="question-header">
+                        <h4>
+                            ${question.question}
+                            <span class="status-indicator"></span>
+                        </h4>
+                    </div>
+                    <div class="answer-section">
+                        ${status !== 'marked' ? `
+                        <div class="${isUnanswered ? 'unanswered-answer' : 'user-answer'}">
+                            <strong>إجابتك:</strong>
+                            <p>${isUnanswered ? 'لم يتم الإجابة' : question.options[userAnswer].text}</p>
+                        </div>
+                        ` : ''}
+                        <div class="correct-answer">
+                            <strong>الإجابة الصحيحة:</strong>
+                            <p>${correctOption.text}</p>
+                        </div>
+                    </div>
+                `;
+
+                cardDiv.innerHTML = answerDetails;
+
+                // Add copy button
+                const copyBtn = document.createElement('button');
+                copyBtn.className = 'copy-btn';
+                copyBtn.textContent = 'نسخ السؤال';
+                copyBtn.onclick = () => navigator.clipboard.writeText(question.rawQuestion);
+
+                const header = cardDiv.querySelector('.question-header');
+                header.insertBefore(copyBtn, header.querySelector('h4'));
+
+                return cardDiv;
+            },
+
+            copyAllMarked() {
+                const markedQuestions = Array.from(this.markedQuestions)
+                    .map(index => this.quizData[index].rawQuestion)
+                    .join('\n\n==\n\n');
+                
+                navigator.clipboard.writeText(markedQuestions);
             },
 
             updateCircularProgress(id, percentage) {
@@ -645,7 +812,7 @@
             }
         };
 
-        // إضافة أحداث النقر للأزرار
+        // Event listeners
         document.getElementById('startQuizBtn').addEventListener('click', () => quizApp.startQuiz());
         document.getElementById('prevBtn').addEventListener('click', () => quizApp.previousQuestion());
         document.getElementById('nextBtn').addEventListener('click', () => quizApp.nextQuestion());
