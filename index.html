@@ -6,7 +6,6 @@
     <title>PlayPLX Quiz App</title>
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.1/chart.min.js"></script>
-    <!-- Updated Firebase CDN links -->
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
     <style>
@@ -210,6 +209,7 @@
             flex: 1 1 calc(50% - 0.5rem);
             display: flex;
             align-items: center;
+            color: var(--text-color) !important;
         }
         
         @media (max-width: 768px) {
@@ -551,18 +551,23 @@
             const optionsContainer = document.getElementById('optionsContainer');
             optionsContainer.innerHTML = '';
             
+            if (!question.options || question.options.length === 0) {
+                optionsContainer.innerHTML = '<div class="option">خطأ: لا توجد خيارات لهذا السؤال</div>';
+                return;
+            }
+            
             question.options.forEach((option, index) => {
                 const optionElement = document.createElement('div');
                 optionElement.className = 'option';
-                optionElement.textContent = option.text;
+                optionElement.textContent = option.text || `الخيار ${index + 1}`;
                 optionElement.dataset.index = index;
+                optionElement.style.cursor = 'pointer';
                 optionElement.addEventListener('click', () => selectOption(index));
                 optionsContainer.appendChild(optionElement);
             });
             
             document.getElementById('nextQuestion').classList.add('hidden');
             document.getElementById('finishQuiz').classList.add('hidden');
-            
             updateMarkButton();
             updateQuestionStats();
         }
