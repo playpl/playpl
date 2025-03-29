@@ -64,63 +64,6 @@
             gap: 2rem;
         }
 
-        .slider-container {
-            width: 100%;
-            max-width: 300px;
-            margin: 0 auto;
-            position: relative;
-        }
-
-        .circular-slider {
-            width: 220px;
-            height: 220px;
-            position: relative;
-            margin: 0 auto;
-        }
-
-        .circular-slider svg {
-            transform: rotate(-90deg);
-            overflow: visible;
-        }
-
-        .slider-bg {
-            fill: none;
-            stroke: var(--card-bg);
-            stroke-width: 20;
-        }
-
-        .slider-fill {
-            fill: none;
-            stroke: var(--primary-color);
-            stroke-width: 20;
-            transition: stroke-dashoffset 0.3s;
-        }
-
-        .slider-thumb {
-            position: absolute;
-            width: 30px;
-            height: 30px;
-            background: var(--primary-color);
-            border-radius: 50%;
-            top: 50%;
-            left: 50%;
-            margin: -15px 0 0 -15px;
-            cursor: pointer;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
-            transform: rotate(0deg) translate(110px);
-            user-select: none;
-            z-index: 10;
-        }
-
-        .slider-value {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 2rem;
-            font-weight: bold;
-        }
-
         .options-selector {
             display: flex;
             flex-direction: column;
@@ -149,6 +92,16 @@
             border-radius: 5px;
         }
 
+        .time-per-question {
+            background: var(--card-bg);
+            padding: 1rem;
+            border-radius: 10px;
+            margin-top: 0.5rem;
+            text-align: center;
+            color: var(--text-color);
+            font-size: 0.9rem;
+        }
+
         .checkbox-option {
             display: flex;
             align-items: center;
@@ -163,6 +116,12 @@
             width: 18px;
             height: 18px;
             accent-color: var(--primary-color);
+        }
+
+        .marked-count {
+            margin-right: 0.5rem;
+            color: var(--marked);
+            font-size: 0.9rem;
         }
 
         .progress-bar {
@@ -206,16 +165,6 @@
             margin-top: 0.5rem;
         }
 
-        .timer {
-            position: absolute;
-            top: 0.5rem;
-            left: 0.5rem;
-            background: var(--primary-color);
-            padding: 0.25rem 0.5rem;
-            border-radius: 20px;
-            font-size: 0.8rem;
-        }
-
         .total-timer {
             text-align: center;
             margin-bottom: 0.5rem;
@@ -249,13 +198,35 @@
         .option.correct {
             background: var(--correct);
             border-color: var(--correct);
-            color: #000;
+            animation: correctFeedback 0.5s;
         }
 
         .option.wrong {
             background: var(--wrong);
             border-color: var(--wrong);
-            color: #fff;
+            animation: wrongFeedback 0.5s;
+        }
+
+        .highlighted-error {
+            color: #ff0000;
+            font-weight: bold;
+        }
+
+        .option.wrong .highlighted-error {
+            color: #ffffff;
+            text-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
+        }
+
+        @keyframes correctFeedback {
+            0% { box-shadow: 0 0 0 0 rgba(0, 200, 83, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(0, 200, 83, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(0, 200, 83, 0); }
+        }
+
+        @keyframes wrongFeedback {
+            0% { box-shadow: 0 0 0 0 rgba(213, 0, 0, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(213, 0, 0, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(213, 0, 0, 0); }
         }
 
         .navigation-buttons {
@@ -274,6 +245,12 @@
             color: white;
             font-size: 1rem;
             transition: all 0.2s;
+        }
+
+        #startQuizBtn {
+            width: fit-content;
+            margin: 0 auto;
+            padding: 0.75rem 2rem;
         }
 
         .nav-btn:hover {
@@ -300,33 +277,41 @@
             box-shadow: 0 4px 20px rgba(0,0,0,0.2);
         }
 
-        .stats-grid {
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-            margin: 0;
-        }
-
-        .stat-box {
-            padding: 1rem;
-            border-radius: 10px;
+        .unified-chart-container {
             text-align: center;
+            padding: 1rem;
+            margin-bottom: 1rem;
         }
 
-        .correct-stat {
-            background: rgba(0, 200, 83, 0.1);
-            border: 2px solid var(--correct);
+        .unified-chart {
+            position: relative;
+            width: 200px;
+            height: 200px;
+            margin: 0 auto;
         }
 
-        .wrong-stat {
-            background: rgba(213, 0, 0, 0.1);
-            border: 2px solid var(--wrong);
+        .chart-legend {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 1rem;
         }
 
-        .unanswered-stat {
-            background: rgba(245, 158, 11, 0.1);
-            border: 2px solid var(--unanswered);
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
         }
+
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .legend-color.correct { background: var(--correct); }
+        .legend-color.wrong { background: var(--wrong); }
+        .legend-color.unanswered { background: var(--unanswered); }
 
         .marked-section {
             margin-top: 1.5rem;
@@ -412,45 +397,6 @@
         .unanswered-answer {
             background: rgba(245, 158, 11, 0.1);
             border: 2px solid var(--unanswered);
-        }
-
-        .circular-progress {
-            position: relative;
-            width: 80px;
-            height: 80px;
-            margin: 0.5rem auto;
-        }
-
-        .circular-progress svg {
-            width: 100%;
-            height: 100%;
-        }
-
-        .circular-progress circle {
-            fill: none;
-            stroke-width: 8;
-            stroke-linecap: round;
-            transform: translate(5px, 5px);
-        }
-
-        .circular-progress circle.bg {
-            stroke: var(--card-bg);
-        }
-
-        .circular-progress circle.progress {
-            stroke: var(--primary-color);
-            stroke-dasharray: 210;
-            stroke-dashoffset: 210;
-            transition: stroke-dashoffset 0.5s ease;
-        }
-
-        .circular-progress .percentage {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 1.1rem;
-            font-weight: bold;
         }
 
         .copy-btn {
@@ -570,16 +516,6 @@
         .stats-item .dot.wrong { background: var(--wrong); }
         .stats-item .dot.unanswered { background: var(--unanswered); }
 
-        .question-type {
-            display: inline-block;
-            padding: 0.2rem 0.4rem;
-            background: rgba(108, 92, 231, 0.1);
-            color: var(--primary-color);
-            border-radius: 4px;
-            margin-left: 0.5rem;
-            font-size: 0.8rem;
-        }
-
         .mastery-indicator {
             position: absolute;
             top: 0.5rem;
@@ -588,6 +524,12 @@
             background: rgba(0, 0, 0, 0.6);
             padding: 0.25rem 0.5rem;
             border-radius: 10px;
+        }
+
+        .mastery-indicator.marked {
+            background: rgba(255, 215, 0, 0.15);
+            color: var(--marked);
+            border: 1px solid var(--marked);
         }
 
         @media (min-width: 768px) {
@@ -600,27 +542,9 @@
                 grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             }
 
-            .stats-grid {
-                flex-direction: row;
-                justify-content: space-between;
-            }
-
-            .score-summary {
-                padding: 1.5rem;
-            }
-
-            .circular-progress {
-                width: 100px;
-                height: 100px;
-            }
-
-            .circular-progress circle.progress {
-                stroke-dasharray: 280;
-                stroke-dashoffset: 280;
-            }
-
-            .circular-progress .percentage {
-                font-size: 1.3rem;
+            .unified-chart {
+                width: 250px;
+                height: 250px;
             }
 
             #markedQuestionsDetails,
@@ -664,24 +588,30 @@
         <div class="page creation-page active-page">
             <h2>اختبار القدرات - القسم اللفظي</h2>
             
-            <div class="circular-slider">
-                <svg width="220" height="220" viewBox="0 0 220 220">
-                    <circle class="slider-bg" cx="110" cy="110" r="100"></circle>
-                    <circle class="slider-fill" cx="110" cy="110" r="100" stroke-dasharray="628.32" stroke-dashoffset="0"></circle>
-                </svg>
-                <div class="slider-thumb" id="sliderThumb"></div>
-                <div class="slider-value" id="sliderValue">100%</div>
-            </div>
-            
             <div class="options-selector">
                 <div class="question-count">
                     <label for="questionCount">عدد الأسئلة:</label>
                     <input type="number" id="questionCount" min="5" max="100" value="20">
                 </div>
                 
+                <div class="question-count">
+                    <label for="testDuration">وقت الاختبار (دقائق):</label>
+                    <input type="number" id="testDuration" min="1" max="120" value="30">
+                </div>
+                
+                <div class="time-per-question" id="timePerQuestion">
+                    الوقت المخصص لكل سؤال: 1:30 دقيقة
+                </div>
+                
                 <label class="checkbox-option">
                     <input type="checkbox" id="markedOnly">
                     <span>الأسئلة المعلّمة فقط</span>
+                    <span class="marked-count" id="markedCount">(0)</span>
+                </label>
+                
+                <label class="checkbox-option">
+                    <input type="checkbox" id="autoAdvance" checked>
+                    <span>الانتقال التلقائي للسؤال التالي</span>
                 </label>
             </div>
             
@@ -720,36 +650,21 @@
 
         <div class="page results-page">
             <div class="score-summary">
-                <div class="stats-grid">
-                    <div class="stat-box correct-stat">
-                        <div class="circular-progress">
-                            <svg>
-                                <circle class="bg" cx="35" cy="35" r="30"></circle>
-                                <circle class="progress" cx="35" cy="35" r="30"></circle>
-                            </svg>
-                            <div class="percentage" id="correctPercentage">0%</div>
+                <div class="unified-chart-container">
+                    <div class="unified-chart" id="resultsChart"></div>
+                    <div class="chart-legend">
+                        <div class="legend-item">
+                            <div class="legend-color correct"></div>
+                            <span id="correctCount">0 صحيحة</span>
                         </div>
-                        <p>الإجابات الصحيحة</p>
-                    </div>
-                    <div class="stat-box wrong-stat">
-                        <div class="circular-progress">
-                            <svg>
-                                <circle class="bg" cx="35" cy="35" r="30"></circle>
-                                <circle class="progress" cx="35" cy="35" r="30"></circle>
-                            </svg>
-                            <div class="percentage" id="wrongPercentage">0%</div>
+                        <div class="legend-item">
+                            <div class="legend-color wrong"></div>
+                            <span id="wrongCount">0 خاطئة</span>
                         </div>
-                        <p>الإجابات الخاطئة</p>
-                    </div>
-                    <div class="stat-box unanswered-stat">
-                        <div class="circular-progress">
-                            <svg>
-                                <circle class="bg" cx="35" cy="35" r="30"></circle>
-                                <circle class="progress" cx="35" cy="35" r="30"></circle>
-                            </svg>
-                            <div class="percentage" id="unansweredPercentage">0%</div>
+                        <div class="legend-item">
+                            <div class="legend-color unanswered"></div>
+                            <span id="unansweredCount">0 غير مجابة</span>
                         </div>
-                        <p>أسئلة غير مجابة</p>
                     </div>
                 </div>
             </div>
@@ -777,6 +692,7 @@
 
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
     <script>
         const firebaseConfig = {
@@ -796,94 +712,50 @@
             currentQuestion: 0,
             userAnswers: [],
             markedQuestions: new Set(),
-            questionTimer: null,
             totalTimer: null,
             totalTime: 0,
             startTime: 0,
-            sliderValue: 100,
             questionCount: 20,
+            testDuration: 30, // in minutes
             markedOnly: false,
+            autoAdvance: true,
+            resultsChart: null,
             
             init() {
-                this.initSlider();
                 this.addEventListeners();
+                this.updateMarkedCount();
+                this.updateTimePerQuestion();
             },
             
-            initSlider() {
-                const thumb = document.getElementById('sliderThumb');
-                const sliderFill = document.querySelector('.slider-fill');
-                const sliderValue = document.getElementById('sliderValue');
-                const sliderRadius = 100;
-                let isDragging = false;
-                let currentAngle = 0;
+            updateTimePerQuestion() {
+                const questionCount = parseInt(document.getElementById('questionCount').value) || 20;
+                const testDuration = parseInt(document.getElementById('testDuration').value) || 30;
                 
-                const updateSlider = (angle) => {
-                    const normalizedAngle = angle < 0 ? angle + 360 : angle;
-                    const percent = Math.round((normalizedAngle / 360) * 100);
-                    this.sliderValue = Math.max(5, percent);
-                    
-                    const dashOffset = 628.32 * (1 - this.sliderValue / 100);
-                    sliderFill.style.strokeDashoffset = dashOffset;
-                    sliderValue.textContent = `${this.sliderValue}%`;
-                    
-                    const radians = (normalizedAngle - 90) * (Math.PI / 180);
-                    const x = sliderRadius * Math.cos(radians) + 110;
-                    const y = sliderRadius * Math.sin(radians) + 110;
-                    thumb.style.transform = `translate(${x - 110}px, ${y - 110}px)`;
-                };
+                // Calculate time per question in seconds
+                const totalSeconds = testDuration * 60;
+                const secondsPerQuestion = Math.floor(totalSeconds / questionCount);
                 
-                thumb.addEventListener('mousedown', (e) => {
-                    isDragging = true;
-                    e.preventDefault();
-                });
+                const minutes = Math.floor(secondsPerQuestion / 60);
+                const seconds = secondsPerQuestion % 60;
                 
-                document.addEventListener('mousemove', (e) => {
-                    if (!isDragging) return;
-                    
-                    const rect = document.querySelector('.circular-slider').getBoundingClientRect();
-                    const centerX = rect.left + rect.width / 2;
-                    const centerY = rect.top + rect.height / 2;
-                    
-                    const angleRad = Math.atan2(e.clientY - centerY, e.clientX - centerX);
-                    currentAngle = (angleRad * 180 / Math.PI) + 90;
-                    if (currentAngle < 0) currentAngle += 360;
-                    
-                    updateSlider(currentAngle);
-                });
+                const timeText = minutes > 0 
+                    ? `${minutes}:${seconds.toString().padStart(2, '0')} دقيقة` 
+                    : `${seconds} ثانية`;
                 
-                document.addEventListener('mouseup', () => {
-                    isDragging = false;
-                });
-                
-                document.addEventListener('touchstart', (e) => {
-                    const touch = e.touches[0];
-                    const thumb = document.elementFromPoint(touch.clientX, touch.clientY);
-                    if (thumb && thumb.id === 'sliderThumb') {
-                        isDragging = true;
-                    }
-                });
-                
-                document.addEventListener('touchmove', (e) => {
-                    if (!isDragging) return;
+                document.getElementById('timePerQuestion').textContent = `الوقت المخصص لكل سؤال: ${timeText}`;
+            },
+            
+            async updateMarkedCount() {
+                try {
+                    const snapshot = await db.collection('questions')
+                        .where('stats.marked', '==', true)
+                        .get();
                     
-                    const touch = e.touches[0];
-                    const rect = document.querySelector('.circular-slider').getBoundingClientRect();
-                    const centerX = rect.left + rect.width / 2;
-                    const centerY = rect.top + rect.height / 2;
-                    
-                    const angleRad = Math.atan2(touch.clientY - centerY, touch.clientX - centerX);
-                    currentAngle = (angleRad * 180 / Math.PI) + 90;
-                    if (currentAngle < 0) currentAngle += 360;
-                    
-                    updateSlider(currentAngle);
-                    e.preventDefault();
-                });
-                
-                document.addEventListener('touchend', () => {
-                    isDragging = false;
-                });
-                
-                updateSlider(0);
+                    const markedCount = snapshot.size;
+                    document.getElementById('markedCount').textContent = `(${markedCount})`;
+                } catch (error) {
+                    console.error('Error fetching marked questions count:', error);
+                }
             },
             
             addEventListeners() {
@@ -896,10 +768,21 @@
                 document.getElementById('questionCount').addEventListener('input', (e) => {
                     this.questionCount = Math.min(Math.max(5, parseInt(e.target.value) || 20), 100);
                     e.target.value = this.questionCount;
+                    this.updateTimePerQuestion();
+                });
+                
+                document.getElementById('testDuration').addEventListener('input', (e) => {
+                    this.testDuration = Math.min(Math.max(1, parseInt(e.target.value) || 30), 120);
+                    e.target.value = this.testDuration;
+                    this.updateTimePerQuestion();
                 });
                 
                 document.getElementById('markedOnly').addEventListener('change', (e) => {
                     this.markedOnly = e.target.checked;
+                });
+                
+                document.getElementById('autoAdvance').addEventListener('change', (e) => {
+                    this.autoAdvance = e.target.checked;
                 });
                 
                 window.addEventListener('resize', () => {
@@ -911,7 +794,9 @@
 
             async startQuiz() {
                 this.questionCount = parseInt(document.getElementById('questionCount').value) || 20;
+                this.testDuration = parseInt(document.getElementById('testDuration').value) || 30;
                 this.markedOnly = document.getElementById('markedOnly').checked;
+                this.autoAdvance = document.getElementById('autoAdvance').checked;
                 
                 try {
                     await this.fetchQuestions();
@@ -922,9 +807,16 @@
                     
                     this.userAnswers = new Array(this.quizData.length).fill(-1);
                     this.currentQuestion = 0;
-                    this.totalTime = this.quizData.length * 15;
+                    this.totalTime = this.testDuration * 60; // Convert minutes to seconds
                     this.startTime = Date.now();
                     this.markedQuestions = new Set();
+                    
+                    // Initialize marked questions from data
+                    this.quizData.forEach((q, index) => {
+                        if (q.stats && q.stats.marked) {
+                            this.markedQuestions.add(index);
+                        }
+                    });
                     
                     this.switchPage('quiz-page');
                     this.updateLayout();
@@ -951,36 +843,53 @@
                 
                 snapshot.forEach(doc => {
                     const data = doc.data();
-                    const masterPercent = this.calculateMastery(data.stats);
+                    // Initialize stats if not present or incomplete
+                    const stats = data.stats || {};
+                    stats.attempts = stats.attempts || 0;
+                    stats.correct = stats.correct || 0;
+                    stats.marked = stats.marked || false;
                     
-                    if (!this.markedOnly && masterPercent >= 100) {
-                        return;
-                    }
+                    const masteryPercent = this.calculateMastery(stats);
                     
                     allQuestions.push({
                         id: doc.id,
                         ...data,
-                        masteryPercent: masterPercent,
-                        priority: 100 - masterPercent
+                        stats: stats,
+                        masteryPercent: masteryPercent,
+                        priority: 100 - masteryPercent // Questions with lower mastery get higher priority
                     });
                 });
                 
+                // Sort questions by priority (higher priority first)
                 allQuestions.sort((a, b) => b.priority - a.priority);
                 
-                const selectedCount = Math.min(Math.round(allQuestions.length * (this.sliderValue / 100)), this.questionCount);
-                this.quizData = allQuestions.slice(0, selectedCount);
+                // Select questions up to the desired count
+                this.quizData = allQuestions.slice(0, this.questionCount);
                 
+                // Shuffle all questions (no special treatment for marked questions)
                 this.shuffleArray(this.quizData);
             },
             
             calculateMastery(stats) {
                 if (!stats) return 0;
-                const { attempts = 0, correct = 0 } = stats;
                 
+                // Make sure we have valid stats values
+                const attempts = stats.attempts || 0;
+                const correct = stats.correct || 0;
+                const incorrect = attempts - correct;
+                
+                // If no attempts, mastery is 0%
                 if (attempts === 0) return 0;
-                if (correct >= 10) return 100;
+				                // If no incorrect answers, mastery is 100%
+                if (incorrect === 0) return 100;
+
+                // Calculate required correct answers (10 per incorrect answer)
+                const requiredCorrect = incorrect * 10;
                 
-                return Math.round((correct / Math.max(1, attempts)) * 100);
+                // Calculate mastery percentage
+                let mastery = Math.min(100, Math.round((correct / requiredCorrect) * 100));
+                
+                return mastery;
             },
 
             shuffleArray(array) {
@@ -991,8 +900,6 @@
             },
 
             renderQuestion() {
-                clearInterval(this.questionTimer);
-                
                 const container = document.getElementById('questionsContainer');
                 container.innerHTML = '';
                 
@@ -1002,19 +909,18 @@
                 
                 const options = [...question.options];
                 const correctIndex = question.correctIndex;
+                const isMarked = this.markedQuestions.has(this.currentQuestion);
                 
                 questionDiv.innerHTML = `
-                    <div class="timer" id="questionTimer">15</div>
-                    <button class="mark-btn ${this.markedQuestions.has(this.currentQuestion) ? 'marked' : ''}" id="markBtn">
+                    <button class="mark-btn ${isMarked ? 'marked' : ''}" id="markBtn">
                         <svg viewBox="0 0 24 24">
                             <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
                         </svg>
                     </button>
-                    <div class="mastery-indicator">التقان: ${question.masteryPercent}%</div>
-                    <h2>
-                        ${question.question}
-                        ${question.type ? `<span class="question-type">${question.type}</span>` : ''}
-                    </h2>
+                    <div class="mastery-indicator ${isMarked ? 'marked' : ''}">
+                        ${isMarked ? 'سؤال معلّم' : `الإتقان: ${question.masteryPercent}%`}
+                    </div>
+                    <h2>${question.question}</h2>
                     <div class="options-grid"></div>
                 `;
 
@@ -1034,7 +940,6 @@
 
                 container.appendChild(questionDiv);
                 this.updateNavigationButtons();
-                this.startQuestionTimer();
                 this.updateStatsWidget();
             },
 
@@ -1052,26 +957,37 @@
             },
 
             toggleMarkQuestion() {
-                if (this.markedQuestions.has(this.currentQuestion)) {
+                const isMarked = this.markedQuestions.has(this.currentQuestion);
+                const question = this.quizData[this.currentQuestion];
+                
+                if (isMarked) {
                     this.markedQuestions.delete(this.currentQuestion);
+                    question.stats.marked = false;
                 } else {
                     this.markedQuestions.add(this.currentQuestion);
+                    question.stats.marked = true;
                 }
                 
-                const questionId = this.quizData[this.currentQuestion].id;
+                const questionId = question.id;
                 
                 db.collection('questions').doc(questionId).update({
-                    'stats.marked': this.markedQuestions.has(this.currentQuestion)
+                    'stats.marked': !isMarked
                 }).catch(error => console.error('Error updating marked status:', error));
                 
                 const markBtn = document.querySelector('#markBtn');
+                const masteryIndicator = document.querySelector('.mastery-indicator');
+                
                 if (markBtn) {
-                    markBtn.classList.toggle('marked', this.markedQuestions.has(this.currentQuestion));
+                    markBtn.classList.toggle('marked', !isMarked);
+                }
+                
+                if (masteryIndicator) {
+                    masteryIndicator.classList.toggle('marked', !isMarked);
+                    masteryIndicator.textContent = !isMarked ? 'سؤال معلّم' : `الإتقان: ${question.masteryPercent}%`;
                 }
             },
 
             handleAnswer(index, isCorrect) {
-                clearInterval(this.questionTimer);
                 const options = document.querySelectorAll('.option');
                 options.forEach(opt => opt.style.pointerEvents = 'none');
 
@@ -1083,23 +999,55 @@
                         opt.classList.add('correct');
                     } else if (idx === index && !isCorrect) {
                         opt.classList.add('wrong');
+                        
+                        // Highlight the wrong words in red
+                        const wrongText = opt.textContent;
+                        opt.innerHTML = this.highlightIncorrectWords(wrongText);
                     }
                 });
                 
                 const questionId = this.quizData[this.currentQuestion].id;
                 
+                // Update stats in Firebase
                 db.collection('questions').doc(questionId).update({
                     'stats.attempts': firebase.firestore.FieldValue.increment(1),
                     'stats.correct': firebase.firestore.FieldValue.increment(isCorrect ? 1 : 0)
                 }).catch(error => console.error('Error updating question stats:', error));
                 
+                // Also update the local stats for immediate feedback
+                const question = this.quizData[this.currentQuestion];
+                question.stats.attempts = (question.stats.attempts || 0) + 1;
+                if (isCorrect) {
+                    question.stats.correct = (question.stats.correct || 0) + 1;
+                }
+                
+                // Recalculate mastery
+                question.masteryPercent = this.calculateMastery(question.stats);
+                
                 this.updateStatsWidget();
                 
-                setTimeout(() => {
-                    if (this.currentQuestion < this.quizData.length - 1) {
-                        this.nextQuestion();
-                    }
-                }, 1500);
+                if (this.autoAdvance) {
+                    setTimeout(() => {
+                        if (this.currentQuestion < this.quizData.length - 1) {
+                            this.nextQuestion();
+                        } else {
+                            this.showResults();
+                        }
+                    }, 1500);
+                }
+            },
+            
+            // Add a new method to highlight incorrect words
+            highlightIncorrectWords(text) {
+                // Split the text into words
+                const words = text.split(' ');
+                
+                // Apply red highlighting to each word
+                const highlightedText = words.map(word => 
+                    `<span class="highlighted-error">${word}</span>`
+                ).join(' ');
+                
+                return highlightedText;
             },
 
             updateProgress() {
@@ -1129,21 +1077,6 @@
                 document.getElementById('widgetUnanswered').textContent = unanswered;
             },
 
-            startQuestionTimer() {
-                let timeLeft = 15;
-                const timerElement = document.getElementById('questionTimer');
-                
-                this.questionTimer = setInterval(() => {
-                    timeLeft--;
-                    timerElement.textContent = timeLeft;
-                    
-                    if (timeLeft <= 0) {
-                        clearInterval(this.questionTimer);
-                        this.nextQuestion();
-                    }
-                }, 1000);
-            },
-
             startTotalTimer() {
                 this.totalTimer = setInterval(() => {
                     const elapsed = Math.floor((Date.now() - this.startTime) / 1000);
@@ -1170,7 +1103,6 @@
             },
 
             nextQuestion() {
-                clearInterval(this.questionTimer);
                 if (this.currentQuestion < this.quizData.length - 1) {
                     this.currentQuestion++;
                     this.renderQuestion();
@@ -1181,7 +1113,6 @@
             },
 
             previousQuestion() {
-                clearInterval(this.questionTimer);
                 if (this.currentQuestion > 0) {
                     this.currentQuestion--;
                     this.renderQuestion();
@@ -1191,7 +1122,6 @@
 
             showResults() {
                 clearInterval(this.totalTimer);
-                clearInterval(this.questionTimer);
                 document.getElementById('statsWidget').style.display = 'none';
                 
                 const correctAnswers = this.userAnswers.filter((ans, index) => 
@@ -1205,9 +1135,13 @@
                 const unanswered = this.userAnswers.filter(ans => ans === -1).length;
                 const totalQuestions = this.quizData.length;
 
-                this.updateCircularProgress('correctPercentage', (correctAnswers/totalQuestions)*100);
-                this.updateCircularProgress('wrongPercentage', (wrongAnswers/totalQuestions)*100);
-                this.updateCircularProgress('unansweredPercentage', (unanswered/totalQuestions)*100);
+                // Update legend text
+                document.getElementById('correctCount').textContent = `${correctAnswers} صحيحة`;
+                document.getElementById('wrongCount').textContent = `${wrongAnswers} خاطئة`;
+                document.getElementById('unansweredCount').textContent = `${unanswered} غير مجابة`;
+                
+                // Create unified chart
+                this.createUnifiedChart(correctAnswers, wrongAnswers, unanswered);
                 
                 const markedContainer = document.getElementById('markedQuestionsDetails');
                 markedContainer.innerHTML = '';
@@ -1241,18 +1175,84 @@
                 this.switchPage('results-page');
             },
 
+            createUnifiedChart(correct, wrong, unanswered) {
+                const chartContainer = document.getElementById('resultsChart');
+                
+                // If we already have a chart, destroy it before creating a new one
+                if (this.resultsChart) {
+                    this.resultsChart.destroy();
+                }
+                
+                // Create a new canvas
+                chartContainer.innerHTML = '<canvas></canvas>';
+                const ctx = chartContainer.querySelector('canvas').getContext('2d');
+                
+                // Create the chart
+                this.resultsChart = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['صحيحة', 'خاطئة', 'غير مجابة'],
+                        datasets: [{
+                            data: [correct, wrong, unanswered],
+                            backgroundColor: [
+                                getComputedStyle(document.documentElement).getPropertyValue('--correct'),
+                                getComputedStyle(document.documentElement).getPropertyValue('--wrong'),
+                                getComputedStyle(document.documentElement).getPropertyValue('--unanswered')
+                            ],
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        cutout: '70%',
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            tooltip: {
+                                enabled: true,
+                                callbacks: {
+                                    label: function(context) {
+                                        const label = context.label || '';
+                                        const value = context.formattedValue || '';
+                                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                        const percentage = Math.round((context.raw / total) * 100);
+                                        return `${label}: ${value} (${percentage}%)`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            },
+
             createQuestionDetails(question, index, status, isMarked) {
                 const userAnswer = this.userAnswers[index];
                 const isUnanswered = userAnswer === -1;
+                const isWrong = !isUnanswered && userAnswer !== question.correctIndex;
 
                 const cardDiv = document.createElement('div');
                 cardDiv.className = `question-details ${status} ${isMarked ? 'marked' : ''}`;
+
+                // Format the user's answer with highlighting if it was wrong
+                let userAnswerHtml = '';
+                if (!isUnanswered) {
+                    const answerText = question.options[userAnswer];
+                    if (isWrong) {
+                        // Highlight wrong answer
+                        userAnswerHtml = this.highlightIncorrectWords(answerText);
+                    } else {
+                        userAnswerHtml = answerText;
+                    }
+                } else {
+                    userAnswerHtml = 'لم يتم الإجابة';
+                }
 
                 const answerDetails = `
                     <div class="question-header">
                         <h4>
                             ${question.question}
-                            ${question.type ? `<span class="question-type">${question.type}</span>` : ''}
                             <span class="status-indicator"></span>
                         </h4>
                     </div>
@@ -1260,7 +1260,7 @@
                         ${status !== 'marked' || !isMarked ? `
                         <div class="${isUnanswered ? 'unanswered-answer' : 'user-answer'}">
                             <strong>إجابتك:</strong>
-                            <p>${isUnanswered ? 'لم يتم الإجابة' : question.options[userAnswer]}</p>
+                            <p>${userAnswerHtml}</p>
                         </div>
                         ` : ''}
                         <div class="correct-answer">
@@ -1303,15 +1303,6 @@
                 
                 navigator.clipboard.writeText(markedQuestionTexts);
                 alert('تم نسخ الأسئلة المعلّمة بنجاح');
-            },
-
-            updateCircularProgress(id, percentage) {
-                const circle = document.querySelector(`#${id}`).parentElement.querySelector('.progress');
-                const dashArray = parseInt(circle.getAttribute('r')) * 2 * Math.PI;
-                const dashOffset = dashArray - (dashArray * percentage) / 100;
-                circle.style.strokeDasharray = dashArray;
-                circle.style.strokeDashoffset = dashOffset;
-                document.getElementById(id).textContent = `${Math.round(percentage)}%`;
             },
 
             switchPage(pageId) {
