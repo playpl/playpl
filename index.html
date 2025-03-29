@@ -163,6 +163,12 @@
             font-size: 1.1rem;
             margin-bottom: 1rem;
             margin-top: 0.5rem;
+            line-height: 1.5;
+        }
+
+        .highlighted-word {
+            color: var(--wrong);
+            font-weight: bold;
         }
 
         .total-timer {
@@ -210,12 +216,6 @@
         .highlighted-error {
             color: #ff0000;
             font-weight: bold;
-        }
-
-        .question-card .highlighted-error {
-            color: #ff0000;
-            font-weight: bold;
-            text-decoration: underline;
         }
 
         .option.wrong .highlighted-error {
@@ -722,7 +722,7 @@
             totalTime: 0,
             startTime: 0,
             questionCount: 20,
-            testDuration: 30, // in minutes
+            testDuration: 30,
             markedOnly: false,
             autoAdvance: true,
             resultsChart: null,
@@ -737,7 +737,6 @@
                 const questionCount = parseInt(document.getElementById('questionCount').value) || 20;
                 const testDuration = parseInt(document.getElementById('testDuration').value) || 30;
                 
-                // Calculate time per question in seconds
                 const totalSeconds = testDuration * 60;
                 const secondsPerQuestion = Math.floor(totalSeconds / questionCount);
                 
@@ -813,11 +812,10 @@
                     
                     this.userAnswers = new Array(this.quizData.length).fill(-1);
                     this.currentQuestion = 0;
-                    this.totalTime = this.testDuration * 60; // Convert minutes to seconds
+                    this.totalTime = this.testDuration * 60;
                     this.startTime = Date.now();
                     this.markedQuestions = new Set();
                     
-                    // Initialize marked questions from data
                     this.quizData.forEach((q, index) => {
                         if (q.stats && q.stats.marked) {
                             this.markedQuestions.add(index);
@@ -849,7 +847,6 @@
                 
                 snapshot.forEach(doc => {
                     const data = doc.data();
-                    // Initialize stats if not present or incomplete
                     const stats = data.stats || {};
                     stats.attempts = stats.attempts || 0;
                     stats.correct = stats.correct || 0;
@@ -862,37 +859,56 @@
                         ...data,
                         stats: stats,
                         masteryPercent: masteryPercent,
-                        priority: 100 - masteryPercent // Questions with lower mastery get higher priority
+                        priority: 100 - masteryPercent
                     });
                 });
                 
-                // Sort questions by priority (higher priority first)
                 allQuestions.sort((a, b) => b.priority - a.priority);
                 
-                // Select questions up to the desired count
-                this.quizData = allQuestions.slice(0, this.questionCount);
+                const priorityGroups = [];
+                let currentPriority = -1;
+                let currentGroup = [];
                 
-                // Shuffle all questions (no special treatment for marked questions)
+                for (const q of allQuestions) {
+                    if (q.priority !== currentPriority) {
+                        if (currentGroup.length > 0) {
+                            priorityGroups.push(currentGroup);
+                        }
+                        currentPriority = q.priority;
+                        currentGroup = [q];
+                    } else {
+                        currentGroup.push(q);
+                    }
+                }
+                
+                if (currentGroup.length > 0) {
+                    priorityGroups.push(currentGroup);
+                }
+                
+                const shuffledQuestions = [];
+                for (const group of priorityGroups) {
+                    this.shuffleArray(group);
+                    shuffledQuestions.push(...group);
+                }
+                
+                this.quizData = shuffledQuestions.slice(0, this.questionCount);
+                
                 this.shuffleArray(this.quizData);
             },
             
             calculateMastery(stats) {
                 if (!stats) return 0;
                 
-                // Make sure we have valid stats values
                 const attempts = stats.attempts || 0;
                 const correct = stats.correct || 0;
                 const incorrect = attempts - correct;
-		                    // If no attempts, mastery is 0%
+                
                 if (attempts === 0) return 0;
                 
-                // If no incorrect answers, mastery is 100%
                 if (incorrect === 0) return 100;
 
-                // Calculate required correct answers (10 per incorrect answer)
                 const requiredCorrect = incorrect * 10;
                 
-                // Calculate mastery percentage
                 let mastery = Math.min(100, Math.round((correct / requiredCorrect) * 100));
                 
                 return mastery;
@@ -917,13 +933,15 @@
                 const correctIndex = question.correctIndex;
                 const isMarked = this.markedQuestions.has(this.currentQuestion);
                 
-                // فحص ما إذا كان السؤال من نوع "خطأ"
-                const isErrorType = question.type === 'خطأ';
+                const isErrorTypeQuestion = 
+                    question.type === 'خطأ' || 
+                    question.question.includes('خطأ:') || 
+                    options.some(opt => opt.includes('*'));
+                    
+                let highlightedQuestion = question.question;
                 
-                // إذا كان السؤال من نوع خطأ، نقوم بتمييز الكلمات من الخيارات في نص السؤال
-                let questionText = question.question;
-                if (isErrorType) {
-                    questionText = this.highlightWordsFromOptions(questionText, options);
+                if (isErrorTypeQuestion) {
+                    highlightedQuestion = this.highlightOptionsInQuestion(question.question, options);
                 }
                 
                 questionDiv.innerHTML = `
@@ -935,14 +953,17 @@
                     <div class="mastery-indicator ${isMarked ? 'marked' : ''}">
                         ${isMarked ? 'سؤال معلّم' : `الإتقان: ${question.masteryPercent}%`}
                     </div>
-                    <h2>${questionText}</h2>
+                    <h2>${highlightedQuestion}</h2>
                     <div class="options-grid"></div>
                 `;
 
                 options.forEach((option, index) => {
                     const optionDiv = document.createElement('div');
                     optionDiv.className = 'option';
-                    optionDiv.textContent = option;
+                    
+                    const cleanOption = option.replace('*', '');
+                    optionDiv.textContent = cleanOption;
+                    
                     optionDiv.onclick = () => this.handleAnswer(index, index === correctIndex);
                     questionDiv.querySelector('.options-grid').appendChild(optionDiv);
                 });
@@ -958,30 +979,30 @@
                 this.updateStatsWidget();
             },
             
-            // دالة لتمييز الكلمات الموجودة في الخيارات داخل نص السؤال
-            highlightWordsFromOptions(questionText, options) {
-                // قائمة الكلمات من خيارات الإجابة
-                const optionWords = [];
-                
-                // استخراج جميع الكلمات من الخيارات
-                options.forEach(option => {
-                    // تقسيم كل خيار إلى كلمات (مع مراعاة الأحرف الخاصة)
-                    const words = option.match(/[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF]+/g) || [];
-                    // إضافة الكلمات إلى القائمة (للكلمات التي طولها أكبر من 2 حرف)
-                    optionWords.push(...words.filter(word => word.length > 2));
-                });
-                
-                // ترتيب الكلمات حسب الطول (الأطول أولاً) لتجنب تمييز أجزاء من الكلمات
-                optionWords.sort((a, b) => b.length - a.length);
-                
-                // إضافة علامة التمييز لكل كلمة موجودة في السؤال
+            highlightOptionsInQuestion(questionText, options) {
                 let highlightedText = questionText;
-                optionWords.forEach(word => {
-                    const regExp = new RegExp(`(${word})`, 'g');
-                    highlightedText = highlightedText.replace(regExp, '<span class="highlighted-error">$1</span>');
-                });
+                
+                const cleanOptions = options.map(opt => opt.replace('*', '').trim());
+                
+                cleanOptions.sort((a, b) => b.length - a.length);
+                
+                for (const option of cleanOptions) {
+                    if (option && option.length > 1) {
+                        if (option.length <= 2) continue;
+                        
+                        const regex = new RegExp(`\\b${this.escapeRegExp(option)}\\b`, 'g');
+                        
+                        highlightedText = highlightedText.replace(regex, match => 
+                            `<span class="highlighted-word">${match}</span>`
+                        );
+                    }
+                }
                 
                 return highlightedText;
+            },
+            
+            escapeRegExp(string) {
+                return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
             },
 
             updateLayout() {
@@ -1041,7 +1062,6 @@
                     } else if (idx === index && !isCorrect) {
                         opt.classList.add('wrong');
                         
-                        // Highlight the wrong words in red
                         const wrongText = opt.textContent;
                         opt.innerHTML = this.highlightIncorrectWords(wrongText);
                     }
@@ -1049,20 +1069,17 @@
                 
                 const questionId = this.quizData[this.currentQuestion].id;
                 
-                // Update stats in Firebase
                 db.collection('questions').doc(questionId).update({
                     'stats.attempts': firebase.firestore.FieldValue.increment(1),
                     'stats.correct': firebase.firestore.FieldValue.increment(isCorrect ? 1 : 0)
                 }).catch(error => console.error('Error updating question stats:', error));
                 
-                // Also update the local stats for immediate feedback
                 const question = this.quizData[this.currentQuestion];
                 question.stats.attempts = (question.stats.attempts || 0) + 1;
                 if (isCorrect) {
                     question.stats.correct = (question.stats.correct || 0) + 1;
                 }
                 
-                // Recalculate mastery
                 question.masteryPercent = this.calculateMastery(question.stats);
                 
                 this.updateStatsWidget();
@@ -1078,12 +1095,9 @@
                 }
             },
             
-            // Add a new method to highlight incorrect words
             highlightIncorrectWords(text) {
-                // Split the text into words
                 const words = text.split(' ');
                 
-                // Apply red highlighting to each word
                 const highlightedText = words.map(word => 
                     `<span class="highlighted-error">${word}</span>`
                 ).join(' ');
@@ -1176,12 +1190,10 @@
                 const unanswered = this.userAnswers.filter(ans => ans === -1).length;
                 const totalQuestions = this.quizData.length;
 
-                // Update legend text
                 document.getElementById('correctCount').textContent = `${correctAnswers} صحيحة`;
                 document.getElementById('wrongCount').textContent = `${wrongAnswers} خاطئة`;
                 document.getElementById('unansweredCount').textContent = `${unanswered} غير مجابة`;
                 
-                // Create unified chart
                 this.createUnifiedChart(correctAnswers, wrongAnswers, unanswered);
                 
                 const markedContainer = document.getElementById('markedQuestionsDetails');
@@ -1219,16 +1231,13 @@
             createUnifiedChart(correct, wrong, unanswered) {
                 const chartContainer = document.getElementById('resultsChart');
                 
-                // If we already have a chart, destroy it before creating a new one
                 if (this.resultsChart) {
                     this.resultsChart.destroy();
                 }
                 
-                // Create a new canvas
                 chartContainer.innerHTML = '<canvas></canvas>';
                 const ctx = chartContainer.querySelector('canvas').getContext('2d');
                 
-                // Create the chart
                 this.resultsChart = new Chart(ctx, {
                     type: 'doughnut',
                     data: {
@@ -1276,20 +1285,10 @@
                 const cardDiv = document.createElement('div');
                 cardDiv.className = `question-details ${status} ${isMarked ? 'marked' : ''}`;
 
-                // تمييز الكلمات للأسئلة من نوع خطأ
-                const isErrorType = question.type === 'خطأ';
-                let questionText = question.question;
-                
-                if (isErrorType) {
-                    questionText = this.highlightWordsFromOptions(questionText, question.options);
-                }
-
-                // Format the user's answer with highlighting if it was wrong
                 let userAnswerHtml = '';
                 if (!isUnanswered) {
-                    const answerText = question.options[userAnswer];
+                    const answerText = question.options[userAnswer].replace('*', '');
                     if (isWrong) {
-                        // Highlight wrong answer
                         userAnswerHtml = this.highlightIncorrectWords(answerText);
                     } else {
                         userAnswerHtml = answerText;
@@ -1298,10 +1297,22 @@
                     userAnswerHtml = 'لم يتم الإجابة';
                 }
 
+                const isErrorTypeQuestion = 
+                    question.type === 'خطأ' || 
+                    question.question.includes('خطأ:') || 
+                    question.options.some(opt => opt.includes('*'));
+
+                let highlightedQuestion;
+                if (isErrorTypeQuestion) {
+                    highlightedQuestion = this.highlightOptionsInQuestion(question.question, question.options);
+                } else {
+                    highlightedQuestion = question.question;
+                }
+
                 const answerDetails = `
                     <div class="question-header">
                         <h4>
-                            ${questionText}
+                            ${highlightedQuestion}
                             <span class="status-indicator"></span>
                         </h4>
                     </div>
@@ -1314,7 +1325,7 @@
                         ` : ''}
                         <div class="correct-answer">
                             <strong>الإجابة الصحيحة:</strong>
-                            <p>${question.options[question.correctIndex]}</p>
+                            <p>${question.options[question.correctIndex].replace('*', '')}</p>
                         </div>
                     </div>
                 `;
@@ -1326,7 +1337,7 @@
                 copyBtn.textContent = 'نسخ السؤال';
                 
                 const questionText = `${question.question}\n${question.options.map((opt, i) => 
-                    `${i === question.correctIndex ? '*' : ''}${opt}`).join('\n')}`;
+                    `${i === question.correctIndex ? '*' : ''}${opt.replace('*', '')}`).join('\n')}`;
                     
                 copyBtn.onclick = () => navigator.clipboard.writeText(questionText);
 
@@ -1346,7 +1357,7 @@
                     .map(index => {
                         const q = this.quizData[index];
                         return `${q.question}\n${q.options.map((opt, i) => 
-                            `${i === q.correctIndex ? '*' : ''}${opt}`).join('\n')}`;
+                            `${i === q.correctIndex ? '*' : ''}${opt.replace('*', '')}`).join('\n')}`;
                     })
                     .join('\n\n==\n\n');
                 
