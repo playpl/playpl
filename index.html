@@ -212,6 +212,12 @@
             font-weight: bold;
         }
 
+        .question-card .highlighted-error {
+            color: #ff0000;
+            font-weight: bold;
+            text-decoration: underline;
+        }
+
         .option.wrong .highlighted-error {
             color: #ffffff;
             text-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
@@ -877,10 +883,10 @@
                 const attempts = stats.attempts || 0;
                 const correct = stats.correct || 0;
                 const incorrect = attempts - correct;
-                
-                // If no attempts, mastery is 0%
+		                    // If no attempts, mastery is 0%
                 if (attempts === 0) return 0;
-				                // If no incorrect answers, mastery is 100%
+                
+                // If no incorrect answers, mastery is 100%
                 if (incorrect === 0) return 100;
 
                 // Calculate required correct answers (10 per incorrect answer)
@@ -911,6 +917,15 @@
                 const correctIndex = question.correctIndex;
                 const isMarked = this.markedQuestions.has(this.currentQuestion);
                 
+                // فحص ما إذا كان السؤال من نوع "خطأ"
+                const isErrorType = question.type === 'خطأ';
+                
+                // إذا كان السؤال من نوع خطأ، نقوم بتمييز الكلمات من الخيارات في نص السؤال
+                let questionText = question.question;
+                if (isErrorType) {
+                    questionText = this.highlightWordsFromOptions(questionText, options);
+                }
+                
                 questionDiv.innerHTML = `
                     <button class="mark-btn ${isMarked ? 'marked' : ''}" id="markBtn">
                         <svg viewBox="0 0 24 24">
@@ -920,7 +935,7 @@
                     <div class="mastery-indicator ${isMarked ? 'marked' : ''}">
                         ${isMarked ? 'سؤال معلّم' : `الإتقان: ${question.masteryPercent}%`}
                     </div>
-                    <h2>${question.question}</h2>
+                    <h2>${questionText}</h2>
                     <div class="options-grid"></div>
                 `;
 
@@ -941,6 +956,32 @@
                 container.appendChild(questionDiv);
                 this.updateNavigationButtons();
                 this.updateStatsWidget();
+            },
+            
+            // دالة لتمييز الكلمات الموجودة في الخيارات داخل نص السؤال
+            highlightWordsFromOptions(questionText, options) {
+                // قائمة الكلمات من خيارات الإجابة
+                const optionWords = [];
+                
+                // استخراج جميع الكلمات من الخيارات
+                options.forEach(option => {
+                    // تقسيم كل خيار إلى كلمات (مع مراعاة الأحرف الخاصة)
+                    const words = option.match(/[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF]+/g) || [];
+                    // إضافة الكلمات إلى القائمة (للكلمات التي طولها أكبر من 2 حرف)
+                    optionWords.push(...words.filter(word => word.length > 2));
+                });
+                
+                // ترتيب الكلمات حسب الطول (الأطول أولاً) لتجنب تمييز أجزاء من الكلمات
+                optionWords.sort((a, b) => b.length - a.length);
+                
+                // إضافة علامة التمييز لكل كلمة موجودة في السؤال
+                let highlightedText = questionText;
+                optionWords.forEach(word => {
+                    const regExp = new RegExp(`(${word})`, 'g');
+                    highlightedText = highlightedText.replace(regExp, '<span class="highlighted-error">$1</span>');
+                });
+                
+                return highlightedText;
             },
 
             updateLayout() {
@@ -1235,6 +1276,14 @@
                 const cardDiv = document.createElement('div');
                 cardDiv.className = `question-details ${status} ${isMarked ? 'marked' : ''}`;
 
+                // تمييز الكلمات للأسئلة من نوع خطأ
+                const isErrorType = question.type === 'خطأ';
+                let questionText = question.question;
+                
+                if (isErrorType) {
+                    questionText = this.highlightWordsFromOptions(questionText, question.options);
+                }
+
                 // Format the user's answer with highlighting if it was wrong
                 let userAnswerHtml = '';
                 if (!isUnanswered) {
@@ -1252,7 +1301,7 @@
                 const answerDetails = `
                     <div class="question-header">
                         <h4>
-                            ${question.question}
+                            ${questionText}
                             <span class="status-indicator"></span>
                         </h4>
                     </div>
