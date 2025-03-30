@@ -252,6 +252,10 @@
             font-size: 1rem;
             transition: all 0.2s;
         }
+        
+        #submitBtn {
+            background-color: var(--correct);
+        }
 
         #startQuizBtn {
             width: fit-content;
@@ -619,6 +623,15 @@
                     <input type="checkbox" id="autoAdvance" checked>
                     <span>الانتقال التلقائي للسؤال التالي</span>
                 </label>
+                
+                <label class="checkbox-option">
+                    <input type="checkbox" id="freeRunnerMode">
+                    <span>الوضع الحر (Free Runner)</span>
+                </label>
+                
+                <div class="time-per-question free-runner-info" id="freeRunnerInfo" style="display: none;">
+                    الوضع الحر: اختبار مفتوح بدون وقت محدد، يمكنك الاستمرار حتى تقرر الانتهاء
+                </div>
             </div>
             
             <button class="nav-btn" id="startQuizBtn">بدء الاختبار</button>
@@ -634,6 +647,7 @@
             <div class="navigation-buttons">
                 <button class="nav-btn" id="prevBtn">السابق</button>
                 <button class="nav-btn" id="nextBtn">التالي</button>
+                <button class="nav-btn" id="submitBtn" style="display: none;">تسليم</button>
             </div>
             
             <div class="stats-widget" id="statsWidget">
@@ -725,6 +739,8 @@
             testDuration: 30,
             markedOnly: false,
             autoAdvance: true,
+            freeRunnerMode: false,
+            allQuestions: [],
             resultsChart: null,
             
             init() {
@@ -767,6 +783,7 @@
                 document.getElementById('startQuizBtn').addEventListener('click', () => this.startQuiz());
                 document.getElementById('prevBtn').addEventListener('click', () => this.previousQuestion());
                 document.getElementById('nextBtn').addEventListener('click', () => this.nextQuestion());
+                document.getElementById('submitBtn').addEventListener('click', () => this.showResults());
                 document.getElementById('restartQuizBtn').addEventListener('click', () => this.restartQuiz());
                 document.getElementById('copyAllMarkedBtn').addEventListener('click', () => this.copyAllMarked());
                 
@@ -790,6 +807,17 @@
                     this.autoAdvance = e.target.checked;
                 });
                 
+                document.getElementById('freeRunnerMode').addEventListener('change', (e) => {
+                    this.freeRunnerMode = e.target.checked;
+                    
+                    // Show/hide Free Runner info
+                    document.getElementById('freeRunnerInfo').style.display = e.target.checked ? 'block' : 'none';
+                    
+                    // Disable/enable time inputs
+                    document.getElementById('testDuration').disabled = e.target.checked;
+                    document.getElementById('timePerQuestion').style.opacity = e.target.checked ? '0.5' : '1';
+                });
+                
                 window.addEventListener('resize', () => {
                     if (document.querySelector('.quiz-page.active-page')) {
                         this.updateLayout();
@@ -802,6 +830,7 @@
                 this.testDuration = parseInt(document.getElementById('testDuration').value) || 30;
                 this.markedOnly = document.getElementById('markedOnly').checked;
                 this.autoAdvance = document.getElementById('autoAdvance').checked;
+                this.freeRunnerMode = document.getElementById('freeRunnerMode').checked;
                 
                 try {
                     await this.fetchQuestions();
@@ -824,7 +853,17 @@
                     
                     this.switchPage('quiz-page');
                     this.updateLayout();
-                    this.startTotalTimer();
+                    
+                    // Show submit button if in Free Runner mode
+                    document.getElementById('submitBtn').style.display = this.freeRunnerMode ? 'block' : 'none';
+                    
+                    // Only start timer if not in Free Runner mode
+                    if (!this.freeRunnerMode) {
+                        this.startTotalTimer();
+                    } else {
+                        document.getElementById('totalTimer').textContent = 'الوضع الحر - غير محدد بوقت';
+                    }
+                    
                     this.updateProgress();
                     this.renderQuestion();
                     
@@ -891,7 +930,15 @@
                     shuffledQuestions.push(...group);
                 }
                 
-                this.quizData = shuffledQuestions.slice(0, this.questionCount);
+                // Store all questions for Free Runner mode
+                this.allQuestions = [...shuffledQuestions];
+                
+                // Slice only if not in Free Runner mode
+                if (!this.freeRunnerMode) {
+                    this.quizData = shuffledQuestions.slice(0, this.questionCount);
+                } else {
+                    this.quizData = shuffledQuestions;
+                }
                 
                 this.shuffleArray(this.quizData);
             },
@@ -1109,11 +1156,23 @@
                 const answered = this.userAnswers.filter(ans => ans !== -1).length;
                 const total = this.quizData.length;
                 const remaining = total - answered;
-                const percentage = Math.round((answered / total) * 100);
+                let percentage = Math.round((answered / total) * 100);
+                
+                // In Free Runner mode, show progress relative to questions answered
+                if (this.freeRunnerMode) {
+                    // Calculate percentage based on the current position in answered questions
+                    percentage = Math.min(100, Math.round((this.currentQuestion + 1) / total * 100));
+                }
 
                 document.getElementById('progressBarFill').style.width = `${percentage}%`;
-                document.getElementById('progressText').textContent = 
-                    `الأسئلة المحلولة: ${answered}/${total} | المتبقية: ${remaining} | النسبة: ${percentage}%`;
+                
+                if (this.freeRunnerMode) {
+                    document.getElementById('progressText').textContent = 
+                        `الأسئلة المحلولة: ${answered} | السؤال الحالي: ${this.currentQuestion + 1}`;
+                } else {
+                    document.getElementById('progressText').textContent = 
+                        `الأسئلة المحلولة: ${answered}/${total} | المتبقية: ${remaining} | النسبة: ${percentage}%`;
+                }
             },
 
             updateStatsWidget() {
@@ -1154,19 +1213,53 @@
                 const nextBtn = document.getElementById('nextBtn');
                 
                 prevBtn.disabled = this.currentQuestion === 0;
-                nextBtn.textContent = this.currentQuestion === this.quizData.length - 1 ? 'إنهاء' : 'التالي';
+                
+                if (this.freeRunnerMode) {
+                    nextBtn.textContent = 'التالي';
+                } else {
+                    nextBtn.textContent = this.currentQuestion === this.quizData.length - 1 ? 'إنهاء' : 'التالي';
+                }
             },
 
             nextQuestion() {
-                if (this.currentQuestion < this.quizData.length - 1) {
+                if (this.freeRunnerMode) {
+                    // In Free Runner mode, we might need to extend our questions
+                    if (this.currentQuestion >= this.quizData.length - 1) {
+                        // If we're nearing the end, add more questions from our pool
+                        this.addMoreQuestions();
+                    }
                     this.currentQuestion++;
                     this.renderQuestion();
                     this.updateProgress();
                 } else {
-                    this.showResults();
+                    // Normal mode behavior
+                    if (this.currentQuestion < this.quizData.length - 1) {
+                        this.currentQuestion++;
+                        this.renderQuestion();
+                        this.updateProgress();
+                    } else {
+                        this.showResults();
+                    }
                 }
             },
-
+            
+            addMoreQuestions() {
+                // Add a chunk of questions to the quiz data
+                if (this.allQuestions.length > 0) {
+                    // Get 5 more questions (or fewer if less than 5 are available)
+                    const additionalQuestions = this.allQuestions.splice(0, 5);
+                    
+                    // Add them to the quiz data
+                    this.quizData = [...this.quizData, ...additionalQuestions];
+                    
+                    // Extend the userAnswers array
+                    this.userAnswers = [
+                        ...this.userAnswers, 
+                        ...new Array(additionalQuestions.length).fill(-1)
+                    ];
+                }
+            },
+            
             previousQuestion() {
                 if (this.currentQuestion > 0) {
                     this.currentQuestion--;
