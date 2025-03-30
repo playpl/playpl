@@ -169,6 +169,22 @@
         .highlighted-word {
             color: var(--wrong);
             font-weight: bold;
+            background-color: rgba(213, 0, 0, 0.1);
+            padding: 0 2px;
+            border-radius: 3px;
+            position: relative;
+            display: inline-block;
+        }
+        
+        .highlighted-word:after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background-color: var(--wrong);
+            border-radius: 1px;
         }
 
         .total-timer {
@@ -620,7 +636,7 @@
                 </label>
                 
                 <label class="checkbox-option">
-                    <input type="checkbox" id="autoAdvance" checked>
+                    <input type="checkbox" id="autoAdvance">
                     <span>الانتقال التلقائي للسؤال التالي</span>
                 </label>
                 
@@ -738,7 +754,7 @@
             questionCount: 20,
             testDuration: 30,
             markedOnly: false,
-            autoAdvance: true,
+            autoAdvance: false,
             freeRunnerMode: false,
             allQuestions: [],
             resultsChart: null,
@@ -980,13 +996,16 @@
                 const correctIndex = question.correctIndex;
                 const isMarked = this.markedQuestions.has(this.currentQuestion);
                 
+                // Detect if this is an error type question
                 const isErrorTypeQuestion = 
                     question.type === 'خطأ' || 
                     question.question.includes('خطأ:') || 
+                    question.question.includes('الخطأ:') ||
                     options.some(opt => opt.includes('*'));
                     
                 let highlightedQuestion = question.question;
                 
+                // Apply highlighting for error type questions
                 if (isErrorTypeQuestion) {
                     highlightedQuestion = this.highlightOptionsInQuestion(question.question, options);
                 }
@@ -1031,17 +1050,40 @@
                 
                 const cleanOptions = options.map(opt => opt.replace('*', '').trim());
                 
+                // Sort longer options first to avoid partial matches
                 cleanOptions.sort((a, b) => b.length - a.length);
                 
+                // Common Arabic words to exclude from highlighting
+                const commonWords = [
+                    'من', 'في', 'إلى', 'على', 'عن', 'مع', 'هذا', 'هذه', 'ذلك', 'تلك',
+                    'الذي', 'التي', 'الذين', 'اللاتي', 'أن', 'لا', 'لم', 'لن', 'كان',
+                    'كانت', 'يكون', 'تكون', 'هو', 'هي', 'هم', 'هن', 'نحن', 'أنا',
+                    'أنت', 'أنتم', 'أنتن', 'هناك', 'هنا', 'حتى', 'إذا', 'إن', 'ثم',
+                    'لكن', 'لأن', 'بأن', 'كل', 'بعض', 'غير', 'عند', 'عندما', 'أو',
+                    'بين', 'قد', 'و', 'ف', 'ب', 'ل', 'ك', 'قبل', 'بعد', 'فوق', 'تحت'
+                ];
+                
+                // For each option, find and highlight all matching words in the question
                 for (const option of cleanOptions) {
                     if (option && option.length > 1) {
+                        // Skip very short words (less than 3 characters)
                         if (option.length <= 2) continue;
                         
-                        const regex = new RegExp(`\\b${this.escapeRegExp(option)}\\b`, 'g');
+                        // Split option into words
+                        const optionWords = option.split(/\s+/);
                         
-                        highlightedText = highlightedText.replace(regex, match => 
-                            `<span class="highlighted-word">${match}</span>`
-                        );
+                        // Only process meaningful words (at least 3 characters and not common)
+                        for (const word of optionWords) {
+                            if (word.length >= 3 && !commonWords.includes(word)) {
+                                // Create a regex that matches the word as a whole word
+                                const regex = new RegExp(`\\b${this.escapeRegExp(word)}\\b`, 'g');
+                                
+                                // Replace all occurrences with highlighted spans
+                                highlightedText = highlightedText.replace(regex, match => 
+                                    `<span class="highlighted-word">${match}</span>`
+                                );
+                            }
+                        }
                     }
                 }
                 
@@ -1390,9 +1432,11 @@
                     userAnswerHtml = 'لم يتم الإجابة';
                 }
 
+                // Detect if this is an error type question
                 const isErrorTypeQuestion = 
                     question.type === 'خطأ' || 
                     question.question.includes('خطأ:') || 
+                    question.question.includes('الخطأ:') ||
                     question.options.some(opt => opt.includes('*'));
 
                 let highlightedQuestion;
