@@ -1323,6 +1323,7 @@
                 clearInterval(this.totalTimer);
                 document.getElementById('statsWidget').style.display = 'none';
                 
+                // Calculate correct, wrong, and unanswered questions
                 const correctAnswers = this.userAnswers.filter((ans, index) => 
                     ans !== -1 && ans === this.quizData[index].correctIndex
                 ).length;
@@ -1334,15 +1335,19 @@
                 const unanswered = this.userAnswers.filter(ans => ans === -1).length;
                 const totalQuestions = this.quizData.length;
 
+                // Update the counts display
                 document.getElementById('correctCount').textContent = `${correctAnswers} صحيحة`;
                 document.getElementById('wrongCount').textContent = `${wrongAnswers} خاطئة`;
                 document.getElementById('unansweredCount').textContent = `${unanswered} غير مجابة`;
                 
+                // Create the chart with the correct data
                 this.createUnifiedChart(correctAnswers, wrongAnswers, unanswered);
                 
+                // Clear and populate marked questions section
                 const markedContainer = document.getElementById('markedQuestionsDetails');
                 markedContainer.innerHTML = '';
                 
+                // Add marked questions
                 this.markedQuestions.forEach(index => {
                     const question = this.quizData[index];
                     const userAnswer = this.userAnswers[index];
@@ -1354,15 +1359,18 @@
                     markedContainer.appendChild(cardDiv);
                 });
 
+                // Clear and populate wrong questions section
                 const wrongContainer = document.getElementById('wrongQuestionsDetails');
                 wrongContainer.innerHTML = '';
                 
+                // Add all wrong and unanswered questions that are not marked
                 this.userAnswers.forEach((userAnswer, index) => {
                     const question = this.quizData[index];
                     const isCorrect = userAnswer !== -1 && userAnswer === question.correctIndex;
                     const isUnanswered = userAnswer === -1;
                     
-                    if (!isCorrect && !this.markedQuestions.has(index)) {
+                    // Include question if it's wrong or unanswered and not marked
+                    if ((!isCorrect || isUnanswered) && !this.markedQuestions.has(index)) {
                         const status = isUnanswered ? 'unanswered' : 'wrong';
                         const cardDiv = this.createQuestionDetails(question, index, status, false);
                         wrongContainer.appendChild(cardDiv);
