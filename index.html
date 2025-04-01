@@ -702,20 +702,7 @@
                             <span id="unansweredCount">0 غير مجابة</span>
                         </div>
                     </div>
-                    <div class="final-score" id="finalScore"></div>
                 </div>
-            </div>
-
-            <div class="marked-section">
-                <h3>الأسئلة المعلّمة:</h3>
-                <button class="copy-all-btn" id="copyAllMarkedBtn">
-                    <svg viewBox="0 0 24 24">
-                        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7v2H5v14h14v-7h2v7a2 2 0 0 1-2 2z"/>
-                        <path d="M19 7h-2V5h2v2zm-4 0h-2V5h2v2zm-4 0H9V5h2v2zm8 4h-2V9h2v2zm-4 0h-2V9h2v2zm-4 0H9V9h2v2z"/>
-                    </svg>
-                    نسخ الأسئلة المعلّمة
-                </button>
-                <div id="markedQuestionsDetails"></div>
             </div>
 
             <div class="wrong-questions-section">
@@ -1356,7 +1343,6 @@
                 document.getElementById('correctCount').textContent = `${correctAnswers} صحيحة`;
                 document.getElementById('wrongCount').textContent = `${wrongAnswers} خاطئة`;
                 document.getElementById('unansweredCount').textContent = `${unanswered} غير مجابة`;
-                document.getElementById('finalScore').textContent = `النسبة النهائية: ${finalScore}%`;
                 
                 // Create the chart with the correct data
                 this.createUnifiedChart(correctAnswers, wrongAnswers, unanswered);
@@ -1392,6 +1378,9 @@
                 chartContainer.innerHTML = '<canvas></canvas>';
                 const ctx = chartContainer.querySelector('canvas').getContext('2d');
                 
+                const total = correct + wrong + unanswered;
+                const finalScore = Math.round((correct / total) * 100);
+                
                 this.resultsChart = new Chart(ctx, {
                     type: 'doughnut',
                     data: {
@@ -1425,6 +1414,22 @@
                                         return `${label}: ${value} (${percentage}%)`;
                                     }
                                 }
+                            }
+                        },
+                        animation: {
+                            onComplete: function() {
+                                const chart = this.chart;
+                                const ctx = chart.ctx;
+                                const centerX = chart.getDatasetMeta(0).data[0].x;
+                                const centerY = chart.getDatasetMeta(0).data[0].y;
+                                
+                                ctx.save();
+                                ctx.fillStyle = '#FFFFFF';
+                                ctx.font = 'bold 24px Tajawal';
+                                ctx.textAlign = 'center';
+                                ctx.textBaseline = 'middle';
+                                ctx.fillText(`${finalScore}%`, centerX, centerY);
+                                ctx.restore();
                             }
                         }
                     }
