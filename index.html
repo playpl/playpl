@@ -909,14 +909,23 @@
                     
                     const masteryPercent = this.calculateMastery(stats);
                     
-                    allQuestions.push({
-                        id: doc.id,
-                        ...data,
-                        stats: stats,
-                        masteryPercent: masteryPercent,
-                        priority: 100 - masteryPercent
-                    });
+                    // Skip questions with 100% mastery
+                    if (masteryPercent < 100) {
+                        allQuestions.push({
+                            id: doc.id,
+                            ...data,
+                            stats: stats,
+                            masteryPercent: masteryPercent,
+                            priority: 100 - masteryPercent
+                        });
+                    }
                 });
+                
+                // If no questions available after filtering, show a message
+                if (allQuestions.length === 0) {
+                    alert('لا توجد أسئلة متاحة للاختبار. جميع الأسئلة متقنة!');
+                    return;
+                }
                 
                 allQuestions.sort((a, b) => b.priority - a.priority);
                 
