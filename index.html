@@ -617,12 +617,12 @@
             <div class="options-selector">
                 <div class="question-count">
                     <label for="questionCount">عدد الأسئلة:</label>
-                    <input type="number" id="questionCount" min="5" max="100" value="20">
+                    <input type="number" id="questionCount" min="5" max="1000" value="50">
                 </div>
                 
                 <div class="question-count">
                     <label for="testDuration">وقت الاختبار (دقائق):</label>
-                    <input type="number" id="testDuration" min="1" max="120" value="30">
+                    <input type="number" id="testDuration" min="1" max="120" value="8">
                 </div>
                 
                 <div class="time-per-question" id="timePerQuestion">
@@ -702,6 +702,7 @@
                             <span id="unansweredCount">0 غير مجابة</span>
                         </div>
                     </div>
+                    <div class="final-score" id="finalScore"></div>
                 </div>
             </div>
 
@@ -804,7 +805,7 @@
                 document.getElementById('copyAllMarkedBtn').addEventListener('click', () => this.copyAllMarked());
                 
                 document.getElementById('questionCount').addEventListener('input', (e) => {
-                    this.questionCount = Math.min(Math.max(5, parseInt(e.target.value) || 20), 100);
+                    this.questionCount = Math.min(Math.max(5, parseInt(e.target.value) || 20), 1000);
                     e.target.value = this.questionCount;
                     this.updateTimePerQuestion();
                 });
@@ -1004,6 +1005,7 @@
                 const options = [...question.options];
                 const correctIndex = question.correctIndex;
                 const isMarked = this.markedQuestions.has(this.currentQuestion);
+                const hasAnswered = this.userAnswers[this.currentQuestion] !== -1;
                 
                 // Detect if this is an error type question
                 const isErrorTypeQuestion = 
@@ -1039,7 +1041,19 @@
                     const cleanOption = option.replace('*', '');
                     optionDiv.textContent = cleanOption;
                     
-                    optionDiv.onclick = () => this.handleAnswer(index, index === correctIndex);
+                    // If question is already answered, show the correct/wrong state
+                    if (hasAnswered) {
+                        if (index === correctIndex) {
+                            optionDiv.classList.add('correct');
+                        } else if (index === this.userAnswers[this.currentQuestion]) {
+                            optionDiv.classList.add('wrong');
+                            optionDiv.innerHTML = this.highlightIncorrectWords(cleanOption);
+                        }
+                        optionDiv.style.pointerEvents = 'none';
+                    } else {
+                        optionDiv.onclick = () => this.handleAnswer(index, index === correctIndex);
+                    }
+                    
                     questionDiv.querySelector('.options-grid').appendChild(optionDiv);
                 });
 
@@ -1182,14 +1196,14 @@
                 
                 this.updateStatsWidget();
                 
-                if (this.autoAdvance) {
+                if (this.autoAdvance && isCorrect) {
                     setTimeout(() => {
                         if (this.currentQuestion < this.quizData.length - 1) {
                             this.nextQuestion();
                         } else {
                             this.showResults();
                         }
-                    }, 1500);
+                    }, 800);
                 }
             },
             
@@ -1335,44 +1349,32 @@
                 const unanswered = this.userAnswers.filter(ans => ans === -1).length;
                 const totalQuestions = this.quizData.length;
 
+                // Calculate final score percentage
+                const finalScore = Math.round((correctAnswers / totalQuestions) * 100);
+
                 // Update the counts display
                 document.getElementById('correctCount').textContent = `${correctAnswers} صحيحة`;
                 document.getElementById('wrongCount').textContent = `${wrongAnswers} خاطئة`;
                 document.getElementById('unansweredCount').textContent = `${unanswered} غير مجابة`;
+                document.getElementById('finalScore').textContent = `النسبة النهائية: ${finalScore}%`;
                 
                 // Create the chart with the correct data
                 this.createUnifiedChart(correctAnswers, wrongAnswers, unanswered);
                 
-                // Clear and populate marked questions section
-                const markedContainer = document.getElementById('markedQuestionsDetails');
-                markedContainer.innerHTML = '';
-                
-                // Add marked questions
-                this.markedQuestions.forEach(index => {
-                    const question = this.quizData[index];
-                    const userAnswer = this.userAnswers[index];
-                    const isCorrect = userAnswer !== -1 && userAnswer === question.correctIndex;
-                    const isUnanswered = userAnswer === -1;
-                    
-                    const status = isUnanswered ? 'unanswered' : (isCorrect ? 'correct' : 'wrong');
-                    const cardDiv = this.createQuestionDetails(question, index, status, true);
-                    markedContainer.appendChild(cardDiv);
-                });
-
                 // Clear and populate wrong questions section
                 const wrongContainer = document.getElementById('wrongQuestionsDetails');
                 wrongContainer.innerHTML = '';
                 
-                // Add all wrong and unanswered questions that are not marked
+                // Add all wrong and unanswered questions
                 this.userAnswers.forEach((userAnswer, index) => {
                     const question = this.quizData[index];
                     const isCorrect = userAnswer !== -1 && userAnswer === question.correctIndex;
                     const isUnanswered = userAnswer === -1;
                     
-                    // Include question if it's wrong or unanswered and not marked
-                    if ((!isCorrect || isUnanswered) && !this.markedQuestions.has(index)) {
+                    // Include question if it's wrong or unanswered
+                    if (!isCorrect || isUnanswered) {
                         const status = isUnanswered ? 'unanswered' : 'wrong';
-                        const cardDiv = this.createQuestionDetails(question, index, status, false);
+                        const cardDiv = this.createQuestionDetails(question, index, status);
                         wrongContainer.appendChild(cardDiv);
                     }
                 });
@@ -1429,13 +1431,13 @@
                 });
             },
 
-            createQuestionDetails(question, index, status, isMarked) {
+            createQuestionDetails(question, index, status) {
                 const userAnswer = this.userAnswers[index];
                 const isUnanswered = userAnswer === -1;
                 const isWrong = !isUnanswered && userAnswer !== question.correctIndex;
 
                 const cardDiv = document.createElement('div');
-                cardDiv.className = `question-details ${status} ${isMarked ? 'marked' : ''}`;
+                cardDiv.className = `question-details ${status}`;
 
                 let userAnswerHtml = '';
                 if (!isUnanswered) {
@@ -1471,12 +1473,10 @@
                         </h4>
                     </div>
                     <div class="answer-section">
-                        ${status !== 'marked' || !isMarked ? `
                         <div class="${isUnanswered ? 'unanswered-answer' : 'user-answer'}">
                             <strong>إجابتك:</strong>
                             <p>${userAnswerHtml}</p>
                         </div>
-                        ` : ''}
                         <div class="correct-answer">
                             <strong>الإجابة الصحيحة:</strong>
                             <p>${question.options[question.correctIndex].replace('*', '')}</p>
