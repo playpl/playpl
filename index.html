@@ -464,6 +464,7 @@
             align-items: center;
             justify-content: center;
             transition: transform 0.2s;
+            z-index: 10;
         }
 
         .mark-btn:hover {
@@ -550,6 +551,7 @@
             background: rgba(0, 0, 0, 0.6);
             padding: 0.25rem 0.5rem;
             border-radius: 10px;
+            z-index: 10;
         }
 
         .mastery-indicator.marked {
@@ -607,6 +609,725 @@
                 border-color: var(--primary-color);
             }
         }
+
+        /* Passage Preview & Modal Styles */
+        .passage-preview {
+            background: rgba(108, 92, 231, 0.1);
+            border: 1px solid var(--primary-color);
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            position: relative;
+            cursor: pointer;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            max-height: none;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+        
+        .passage-preview:hover {
+            background: rgba(108, 92, 231, 0.15);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.25);
+        }
+        
+        .passage-preview-icon {
+            display: none;
+        }
+        
+        .passage-preview-content {
+            flex: 1;
+            overflow: hidden;
+            max-height: none;
+            text-overflow: ellipsis;
+            font-size: 1rem;
+            line-height: 1.6;
+            position: relative;
+            padding: 0.25rem;
+            color: var(--text-color);
+            font-weight: 400;
+        }
+        
+        .passage-preview-content::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 20px;
+            background: linear-gradient(transparent, rgba(108, 92, 231, 0.1));
+            pointer-events: none;
+        }
+        
+        .passage-preview-button {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 0.4rem 0.7rem;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+            display: none;
+        }
+        
+        .passage-preview-button:hover {
+            filter: brightness(1.1);
+        }
+        
+        .passage-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+        
+        .passage-modal.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        
+        .passage-modal-content {
+            background: var(--card-bg);
+            border-radius: 10px;
+            width: 90%;
+            max-width: 700px;
+            max-height: 90vh;
+            padding: 1.5rem;
+            overflow-y: auto;
+            transform: translateY(20px);
+            transition: transform 0.3s ease;
+            position: relative;
+        }
+        
+        .passage-modal.active .passage-modal-content {
+            transform: translateY(0);
+        }
+        
+        .passage-modal-close {
+            position: absolute;
+            top: 1rem;
+            left: 1rem;
+            background: none;
+            border: none;
+            color: var(--text-color);
+            font-size: 1.5rem;
+            cursor: pointer;
+            z-index: 10;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background: rgba(0, 0, 0, 0.3);
+        }
+        
+        .passage-modal-text {
+            line-height: 1.6;
+            font-size: 1.1rem;
+            max-width: 100%;
+            white-space: pre-wrap;
+        }
+
+        /* Question Type Sliders & Chart Styles */
+        .question-types-container {
+            background: none;
+            border-radius: 15px;
+            padding: 0;
+            margin: 0 0 1rem 0;
+            border: none;
+            width: 100%;
+            max-width: 100%;
+        }
+        
+        .sliders-and-chart {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            align-items: center;
+            width: 100%;
+        }
+        
+        .question-type-sliders {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+        
+        .slider-container {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            padding: 0.75rem 1rem;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            border: none;
+        }
+        
+        .slider-container:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+        
+        .slider-container.locked {
+            border: 2px dashed var(--primary-color);
+        }
+        
+        .slider-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .slider-controls {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .delete-type-btn, .lock-type-btn {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: rgba(0, 0, 0, 0.15);
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            padding: 0;
+        }
+        
+        .delete-type-btn svg, .lock-type-btn svg {
+            width: 14px;
+            height: 14px;
+            fill: rgba(255, 255, 255, 0.7);
+            transition: all 0.2s ease;
+        }
+        
+        .delete-type-btn:hover {
+            background: rgba(255, 0, 0, 0.2);
+            transform: scale(1.1);
+        }
+        
+        .lock-type-btn:hover {
+            background: rgba(255, 193, 7, 0.2);
+            transform: scale(1.1);
+        }
+        
+        .delete-type-btn:hover svg, .lock-type-btn:hover svg {
+            fill: rgba(255, 255, 255, 0.9);
+        }
+        
+        .lock-type-btn.locked {
+            background: rgba(255, 193, 7, 0.4);
+        }
+        
+        .lock-type-btn.locked svg {
+            fill: rgba(255, 255, 255, 0.9);
+        }
+        
+        .slider-container.deleting {
+            animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+            background-color: rgba(255, 0, 0, 0.1);
+            border-color: rgba(255, 0, 0, 0.3);
+        }
+        
+        @keyframes shake {
+            10%, 90% {
+                transform: translate3d(-1px, 0, 0);
+            }
+            
+            20%, 80% {
+                transform: translate3d(2px, 0, 0);
+            }
+            
+            30%, 50%, 70% {
+                transform: translate3d(-4px, 0, 0);
+            }
+            
+            40%, 60% {
+                transform: translate3d(4px, 0, 0);
+            }
+        }
+        
+        .animate__fadeOutLeft {
+            animation: fadeOutLeft 0.5s forwards;
+        }
+        
+        .animate__zoomOut {
+            animation: zoomOut 0.5s forwards;
+        }
+        
+        @keyframes fadeOutLeft {
+            from {
+                opacity: 1;
+                transform: translateX(0);
+            }
+            to {
+                opacity: 0;
+                transform: translateX(-50px);
+            }
+        }
+        
+        @keyframes zoomOut {
+            from {
+                opacity: 1;
+                transform: scale(1);
+            }
+            to {
+                opacity: 0;
+                transform: scale(0.3);
+            }
+        }
+        
+        .slider-label {
+            font-size: 0.9rem;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .slider-color-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+        
+        .slider-value {
+            font-weight: bold;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 0.2rem 0.5rem;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            min-width: 36px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        
+        .slider-input {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 12px;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.15);
+            outline: none;
+            transition: all 0.2s;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .slider-input:hover {
+            height: 14px;
+        }
+        
+        .slider-input::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+            transition: all 0.2s;
+            border: 2px solid rgba(255, 255, 255, 0.9);
+        }
+        
+        .slider-input::-moz-range-thumb {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+            border: 2px solid rgba(255, 255, 255, 0.9);
+            transition: all 0.2s;
+        }
+        
+        .slider-input:hover::-webkit-slider-thumb {
+            transform: scale(1.2);
+        }
+        
+        .slider-input:hover::-moz-range-thumb {
+            transform: scale(1.2);
+        }
+        
+        .slider-container.locked .slider-input {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+        
+        /* Custom colors for each type - Complete overhaul */
+        .analogy-type {
+            background-color: #4D3B00;
+            border-left: 6px solid #FFC107;
+        }
+        
+        .completion-type {
+            background-color: #003D00;
+            border-left: 6px solid #4CAF50;
+        }
+        
+        .error-type {
+            background-color: #3B0000;
+            border-left: 6px solid #FF5252;
+        }
+        
+        .comprehension-type {
+            background-color: #002F5C;
+            border-left: 6px solid #2196F3;
+        }
+        
+        .vocabulary-type {
+            background-color: #3B0057;
+            border-left: 6px solid #9C27B0;
+        }
+        
+        .analogy-type .slider-label,
+        .completion-type .slider-label,
+        .error-type .slider-label,
+        .comprehension-type .slider-label,
+        .vocabulary-type .slider-label {
+            color: white;
+        }
+        
+        .analogy-type .slider-value, 
+        .analogy-type .slider-input::-webkit-slider-thumb,
+        .analogy-type .slider-input::-moz-range-thumb {
+            background: #FFC107;
+            color: black;
+            border-color: #E6A800;
+        }
+        
+        .completion-type .slider-value,
+        .completion-type .slider-input::-webkit-slider-thumb,
+        .completion-type .slider-input::-moz-range-thumb {
+            background: #4CAF50;
+            color: white;
+            border-color: #388E3C;
+        }
+        
+        .error-type .slider-value, 
+        .error-type .slider-input::-webkit-slider-thumb,
+        .error-type .slider-input::-moz-range-thumb {
+            background: #FF5252;
+            color: white;
+            border-color: #D50000;
+        }
+        
+        .comprehension-type .slider-value,
+        .comprehension-type .slider-input::-webkit-slider-thumb,
+        .comprehension-type .slider-input::-moz-range-thumb {
+            background: #2196F3;
+            color: white;
+            border-color: #1976D2;
+        }
+        
+        .vocabulary-type .slider-value,
+        .vocabulary-type .slider-input::-webkit-slider-thumb,
+        .vocabulary-type .slider-input::-moz-range-thumb {
+            background: #9C27B0;
+            color: white;
+            border-color: #7B1FA2;
+        }
+        
+        .chart-container {
+            width: 100%;
+            height: 320px;
+            position: relative;
+            transition: all 0.3s ease;
+            margin: 1rem auto 2rem;
+            z-index: 1;
+            overflow: visible;
+            max-width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .chart-container canvas {
+            position: relative;
+            z-index: 2;
+        }
+        
+        .chart-container:hover {
+            transform: scale(1.05);
+            z-index: 5;
+        }
+        
+        .chart-total {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: white;
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+            z-index: 3;
+            width: 100%;
+            text-align: center;
+            pointer-events: none;
+        }
+        
+        .types-legend {
+            display: none;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 0.3rem 0.6rem;
+            border-radius: 20px;
+            transition: all 0.3s ease;
+        }
+        
+        .legend-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .legend-color {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+        
+        @media (min-width: 768px) {
+            .sliders-and-chart {
+                flex-direction: column;
+                align-items: center;
+                width: 100%;
+            }
+            
+            .question-type-sliders {
+                width: 100%;
+                display: flex;
+                flex-direction: column;
+                gap: 0.75rem;
+            }
+            
+            .chart-container {
+                height: 280px;
+                margin-bottom: 2rem;
+            }
+        }
+
+        /* Custom alerts */
+        .custom-alert-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1100;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+        
+        .custom-alert-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        
+        .custom-alert {
+            background: var(--card-bg);
+            border-radius: 10px;
+            width: 90%;
+            max-width: 350px;
+            padding: 1.5rem;
+            text-align: center;
+            transform: translateY(-20px);
+            transition: transform 0.3s ease;
+        }
+        
+        .custom-alert-overlay.active .custom-alert {
+            transform: translateY(0);
+        }
+        
+        .custom-alert-title {
+            font-size: 1.3rem;
+            font-weight: bold;
+            margin-bottom: 0.6rem;
+        }
+        
+        .custom-alert-content {
+            font-size: 1.1rem;
+            margin-bottom: 1.2rem;
+        }
+        
+        .custom-alert-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+        }
+        
+        .custom-alert-btn {
+            border: none;
+            padding: 0.6rem 1.2rem;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: bold;
+            min-width: 80px;
+            transition: all 0.2s;
+        }
+        
+        .custom-alert-btn.primary {
+            background: var(--primary-color);
+            color: white;
+        }
+        
+        .custom-alert-btn.secondary {
+            background: var(--card-bg);
+            border: 1px solid var(--primary-color);
+            color: var(--text-color);
+        }
+        
+        .custom-alert-btn:hover {
+            filter: brightness(1.1);
+        }
+        
+        .custom-alert-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            color: var(--primary-color);
+        }
+
+        /* Undo delete button */
+        .undo-delete {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 20px;
+            padding: 0.8rem 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            box-shadow: 0 3px 15px rgba(0, 0, 0, 0.4);
+            opacity: 0;
+            transition: transform 0.3s, opacity 0.3s;
+            cursor: pointer;
+            z-index: 100;
+            font-size: 1.1rem;
+        }
+        
+        .undo-delete.active {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+        
+        .undo-delete svg {
+            width: 20px;
+            height: 20px;
+            fill: white;
+        }
+        
+        .undo-delete span {
+            font-weight: bold;
+        }
+        
+        /* Mobile tooltips */
+        .mobile-tooltip {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            pointer-events: none;
+            max-width: 200px;
+            text-align: center;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+            z-index: 100;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: opacity 0.3s, transform 0.3s;
+        }
+        
+        .mobile-tooltip.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .chart-container {
+            width: 100%;
+            height: 280px;
+            position: relative;
+            transition: all 0.3s ease;
+            margin: 1rem auto 2rem;
+            z-index: 1;
+            overflow: visible;
+            max-width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .chart-container canvas {
+            position: relative;
+            z-index: 2;
+        }
+        
+        .chart-container:hover {
+            transform: scale(1.02);
+            z-index: 5;
+        }
+        
+        .chart-total {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: white;
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+            z-index: 3;
+            width: 100%;
+            text-align: center;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+        
+        .chart-total span {
+            display: block;
+        }
     </style>
 </head>
 <body>
@@ -615,6 +1336,131 @@
             <h2>اختبار القدرات - القسم اللفظي</h2>
             
             <div class="options-selector">
+                <div class="chart-container">
+                    <canvas id="questionTypesChart"></canvas>
+                    <div class="chart-total">
+                        <span>نسب</span>
+                        <span>الأسئلة</span>
+                    </div>
+                </div>
+                
+                <div class="question-type-sliders">
+                    <div class="slider-container analogy-type">
+                        <div class="slider-header">
+                            <span class="slider-label">
+                                <span class="slider-color-dot"></span>
+                                تناظر
+                            </span>
+                            <div class="slider-controls">
+                                <span class="slider-value" id="analogyTypeValue">20%</span>
+                                <button class="lock-type-btn" title="قفل هذا القسم" data-type="analogy">
+                                    <svg viewBox="0 0 24 24">
+                                        <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/>
+                                    </svg>
+                                </button>
+                                <button class="delete-type-btn" title="حذف هذا القسم" data-type="analogy">
+                                    <svg viewBox="0 0 24 24">
+                                        <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                        <input type="range" class="slider-input" id="analogyTypeSlider" min="0" max="100" value="20">
+                    </div>
+                    
+                    <div class="slider-container completion-type">
+                        <div class="slider-header">
+                            <span class="slider-label">
+                                <span class="slider-color-dot"></span>
+                                إكمال الجمل
+                            </span>
+                            <div class="slider-controls">
+                                <span class="slider-value" id="completionTypeValue">20%</span>
+                                <button class="lock-type-btn" title="قفل هذا القسم" data-type="completion">
+                                    <svg viewBox="0 0 24 24">
+                                        <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/>
+                                    </svg>
+                                </button>
+                                <button class="delete-type-btn" title="حذف هذا القسم" data-type="completion">
+                                    <svg viewBox="0 0 24 24">
+                                        <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                        <input type="range" class="slider-input" id="completionTypeSlider" min="0" max="100" value="20">
+                    </div>
+                    
+                    <div class="slider-container error-type">
+                        <div class="slider-header">
+                            <span class="slider-label">
+                                <span class="slider-color-dot"></span>
+                                الخطأ السياقي
+                            </span>
+                            <div class="slider-controls">
+                                <span class="slider-value" id="errorTypeValue">20%</span>
+                                <button class="lock-type-btn" title="قفل هذا القسم" data-type="error">
+                                    <svg viewBox="0 0 24 24">
+                                        <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/>
+                                    </svg>
+                                </button>
+                                <button class="delete-type-btn" title="حذف هذا القسم" data-type="error">
+                                    <svg viewBox="0 0 24 24">
+                                        <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                        <input type="range" class="slider-input" id="errorTypeSlider" min="0" max="100" value="20">
+                    </div>
+                    
+                    <div class="slider-container comprehension-type">
+                        <div class="slider-header">
+                            <span class="slider-label">
+                                <span class="slider-color-dot"></span>
+                                استيعاب المقروء
+                            </span>
+                            <div class="slider-controls">
+                                <span class="slider-value" id="comprehensionTypeValue">20%</span>
+                                <button class="lock-type-btn" title="قفل هذا القسم" data-type="comprehension">
+                                    <svg viewBox="0 0 24 24">
+                                        <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/>
+                                    </svg>
+                                </button>
+                                <button class="delete-type-btn" title="حذف هذا القسم" data-type="comprehension">
+                                    <svg viewBox="0 0 24 24">
+                                        <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                        <input type="range" class="slider-input" id="comprehensionTypeSlider" min="0" max="100" value="20">
+                    </div>
+                    
+                    <div class="slider-container vocabulary-type">
+                        <div class="slider-header">
+                            <span class="slider-label">
+                                <span class="slider-color-dot"></span>
+                                المفردة الشاذة
+                            </span>
+                            <div class="slider-controls">
+                                <span class="slider-value" id="vocabularyTypeValue">20%</span>
+                                <button class="lock-type-btn" title="قفل هذا القسم" data-type="vocabulary">
+                                    <svg viewBox="0 0 24 24">
+                                        <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/>
+                                    </svg>
+                                </button>
+                                <button class="delete-type-btn" title="حذف هذا القسم" data-type="vocabulary">
+                                    <svg viewBox="0 0 24 24">
+                                        <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                        <input type="range" class="slider-input" id="vocabularyTypeSlider" min="0" max="100" value="20">
+                    </div>
+                </div>
+                
                 <div class="question-count">
                     <label for="questionCount">عدد الأسئلة:</label>
                     <input type="number" id="questionCount" min="5" max="1000" value="50">
@@ -652,6 +1498,27 @@
             
             <button class="nav-btn" id="startQuizBtn">بدء الاختبار</button>
         </div>
+
+        <button class="undo-delete" id="undoDeleteBtn">
+            <svg viewBox="0 0 24 24">
+                <path d="M12.5,8C9.85,8 7.45,9 5.6,10.6L2,7V16H11L7.38,12.38C8.77,11.22 10.54,10.5 12.5,10.5C16.04,10.5 19.05,12.81 20.1,16L22.47,15.22C21.08,11.03 17.15,8 12.5,8Z"/>
+            </svg>
+            <span>التراجع عن الحذف</span>
+        </button>
+        
+        <div class="custom-alert-overlay" id="customAlertOverlay">
+            <div class="custom-alert">
+                <div class="custom-alert-icon" id="alertIcon">❓</div>
+                <div class="custom-alert-title" id="alertTitle">تنبيه</div>
+                <div class="custom-alert-content" id="alertContent">محتوى التنبيه</div>
+                <div class="custom-alert-buttons">
+                    <button class="custom-alert-btn secondary" id="alertCancelBtn">إلغاء</button>
+                    <button class="custom-alert-btn primary" id="alertConfirmBtn">تأكيد</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="mobile-tooltip" id="mobileTooltip"></div>
 
         <div class="page quiz-page">
             <div class="progress-bar">
@@ -764,6 +1631,8 @@
                 this.addEventListeners();
                 this.updateMarkedCount();
                 this.updateTimePerQuestion();
+                this.initQuestionTypesChart();
+                this.setupTypeSliders();
             },
             
             updateTimePerQuestion() {
@@ -827,10 +1696,8 @@
                 document.getElementById('freeRunnerMode').addEventListener('change', (e) => {
                     this.freeRunnerMode = e.target.checked;
                     
-                    // Show/hide Free Runner info
                     document.getElementById('freeRunnerInfo').style.display = e.target.checked ? 'block' : 'none';
                     
-                    // Disable/enable time inputs
                     document.getElementById('testDuration').disabled = e.target.checked;
                     document.getElementById('timePerQuestion').style.opacity = e.target.checked ? '0.5' : '1';
                 });
@@ -871,10 +1738,8 @@
                     this.switchPage('quiz-page');
                     this.updateLayout();
                     
-                    // Show submit button if in Free Runner mode
                     document.getElementById('submitBtn').style.display = this.freeRunnerMode ? 'block' : 'none';
                     
-                    // Only start timer if not in Free Runner mode
                     if (!this.freeRunnerMode) {
                         this.startTotalTimer();
                     } else {
@@ -910,7 +1775,6 @@
                     
                     const masteryPercent = this.calculateMastery(stats);
                     
-                    // Skip questions with 100% mastery
                     if (masteryPercent < 100) {
                         allQuestions.push({
                             id: doc.id,
@@ -922,10 +1786,19 @@
                     }
                 });
                 
-                // If no questions available after filtering, show a message
                 if (allQuestions.length === 0) {
                     alert('لا توجد أسئلة متاحة للاختبار. جميع الأسئلة متقنة!');
                     return;
+                }
+                
+                if (!this.markedOnly) {
+                    const typePercentages = this.getQuestionTypePercentages();
+                    const filteredByType = this.filterQuestionsByTypeDistribution(allQuestions, typePercentages);
+                    
+                    if (filteredByType.length >= Math.min(this.questionCount, allQuestions.length)) {
+                        allQuestions.length = 0;
+                        allQuestions.push(...filteredByType);
+                    }
                 }
                 
                 allQuestions.sort((a, b) => b.priority - a.priority);
@@ -956,10 +1829,8 @@
                     shuffledQuestions.push(...group);
                 }
                 
-                // Store all questions for Free Runner mode
                 this.allQuestions = [...shuffledQuestions];
                 
-                // Slice only if not in Free Runner mode
                 if (!this.freeRunnerMode) {
                     this.quizData = shuffledQuestions.slice(0, this.questionCount);
                 } else {
@@ -978,12 +1849,10 @@
                 
                 if (attempts === 0) return 0;
                 
-                // Require at least 10 correct attempts to reach 100% mastery
                 if (correct < 10) {
                     return Math.round((correct / 10) * 100);
                 }
                 
-                // After 10 correct attempts, consider incorrect answers
                 if (incorrect === 0) return 100;
 
                 const requiredCorrect = incorrect * 10;
@@ -1013,7 +1882,6 @@
                 const isMarked = this.markedQuestions.has(this.currentQuestion);
                 const hasAnswered = this.userAnswers[this.currentQuestion] !== -1;
                 
-                // Detect if this is an error type question
                 const isErrorTypeQuestion = 
                     question.type === 'خطأ' || 
                     question.question.includes('خطأ:') || 
@@ -1022,10 +1890,14 @@
                     
                 let highlightedQuestion = question.question;
                 
-                // Apply highlighting for error type questions
                 if (isErrorTypeQuestion) {
                     highlightedQuestion = this.highlightOptionsInQuestion(question.question, options);
                 }
+                
+                const isComprehensionQuestion = 
+                    question.type === 'استيعاب' && 
+                    question.Passage && 
+                    question.Passage.length > 0;
                 
                 questionDiv.innerHTML = `
                     <button class="mark-btn ${isMarked ? 'marked' : ''}" id="markBtn">
@@ -1036,6 +1908,7 @@
                     <div class="mastery-indicator ${isMarked ? 'marked' : ''}">
                         ${isMarked ? 'سؤال معلّم' : `الإتقان: ${question.masteryPercent}%`}
                     </div>
+                    ${isComprehensionQuestion ? this.createPassagePreview(question.Passage) : ''}
                     <h2>${highlightedQuestion}</h2>
                     <div class="options-grid"></div>
                 `;
@@ -1047,7 +1920,6 @@
                     const cleanOption = option.replace('*', '');
                     optionDiv.textContent = cleanOption;
                     
-                    // If question is already answered, show the correct/wrong state
                     if (hasAnswered) {
                         if (index === correctIndex) {
                             optionDiv.classList.add('correct');
@@ -1070,6 +1942,11 @@
                 };
 
                 container.appendChild(questionDiv);
+                
+                if (isComprehensionQuestion) {
+                    this.setupPassageModal(question.Passage);
+                }
+                
                 this.updateNavigationButtons();
                 this.updateStatsWidget();
             },
@@ -1079,10 +1956,8 @@
                 
                 const cleanOptions = options.map(opt => opt.replace('*', '').trim());
                 
-                // Sort longer options first to avoid partial matches
                 cleanOptions.sort((a, b) => b.length - a.length);
                 
-                // Common Arabic words to exclude from highlighting
                 const commonWords = [
                     'من', 'في', 'إلى', 'على', 'عن', 'مع', 'هذا', 'هذه', 'ذلك', 'تلك',
                     'الذي', 'التي', 'الذين', 'اللاتي', 'أن', 'لا', 'لم', 'لن', 'كان',
@@ -1092,22 +1967,16 @@
                     'بين', 'قد', 'و', 'ف', 'ب', 'ل', 'ك', 'قبل', 'بعد', 'فوق', 'تحت'
                 ];
                 
-                // For each option, find and highlight all matching words in the question
                 for (const option of cleanOptions) {
                     if (option && option.length > 1) {
-                        // Skip very short words (less than 3 characters)
                         if (option.length <= 2) continue;
                         
-                        // Split option into words
                         const optionWords = option.split(/\s+/);
                         
-                        // Only process meaningful words (at least 3 characters and not common)
                         for (const word of optionWords) {
                             if (word.length >= 3 && !commonWords.includes(word)) {
-                                // Create a regex that matches the word as a whole word
                                 const regex = new RegExp(`\\b${this.escapeRegExp(word)}\\b`, 'g');
                                 
-                                // Replace all occurrences with highlighted spans
                                 highlightedText = highlightedText.replace(regex, match => 
                                     `<span class="highlighted-word">${match}</span>`
                                 );
@@ -1229,9 +2098,7 @@
                 const remaining = total - answered;
                 let percentage = Math.round((answered / total) * 100);
                 
-                // In Free Runner mode, show progress relative to questions answered
                 if (this.freeRunnerMode) {
-                    // Calculate percentage based on the current position in answered questions
                     percentage = Math.min(100, Math.round((this.currentQuestion + 1) / total * 100));
                 }
 
@@ -1294,16 +2161,13 @@
 
             nextQuestion() {
                 if (this.freeRunnerMode) {
-                    // In Free Runner mode, we might need to extend our questions
                     if (this.currentQuestion >= this.quizData.length - 1) {
-                        // If we're nearing the end, add more questions from our pool
                         this.addMoreQuestions();
                     }
                     this.currentQuestion++;
                     this.renderQuestion();
                     this.updateProgress();
                 } else {
-                    // Normal mode behavior
                     if (this.currentQuestion < this.quizData.length - 1) {
                         this.currentQuestion++;
                         this.renderQuestion();
@@ -1315,15 +2179,11 @@
             },
             
             addMoreQuestions() {
-                // Add a chunk of questions to the quiz data
                 if (this.allQuestions.length > 0) {
-                    // Get 5 more questions (or fewer if less than 5 are available)
                     const additionalQuestions = this.allQuestions.splice(0, 5);
                     
-                    // Add them to the quiz data
                     this.quizData = [...this.quizData, ...additionalQuestions];
                     
-                    // Extend the userAnswers array
                     this.userAnswers = [
                         ...this.userAnswers, 
                         ...new Array(additionalQuestions.length).fill(-1)
@@ -1343,7 +2203,6 @@
                 clearInterval(this.totalTimer);
                 document.getElementById('statsWidget').style.display = 'none';
                 
-                // Calculate correct, wrong, and unanswered questions
                 const correctAnswers = this.userAnswers.filter((ans, index) => 
                     ans !== -1 && ans === this.quizData[index].correctIndex
                 ).length;
@@ -1355,29 +2214,23 @@
                 const unanswered = this.userAnswers.filter(ans => ans === -1).length;
                 const totalQuestions = this.quizData.length;
 
-                // Calculate final score percentage
                 const finalScore = Math.round((correctAnswers / totalQuestions) * 100);
 
-                // Update the counts display
                 document.getElementById('correctCount').textContent = `${correctAnswers} صحيحة`;
                 document.getElementById('wrongCount').textContent = `${wrongAnswers} خاطئة`;
                 document.getElementById('unansweredCount').textContent = `${unanswered} غير مجابة`;
                 document.getElementById('finalScore').textContent = `النسبة النهائية: ${finalScore}%`;
                 
-                // Create the chart with the correct data
                 this.createUnifiedChart(correctAnswers, wrongAnswers, unanswered);
                 
-                // Clear and populate wrong questions section
                 const wrongContainer = document.getElementById('wrongQuestionsDetails');
                 wrongContainer.innerHTML = '';
                 
-                // Add all wrong and unanswered questions
                 this.userAnswers.forEach((userAnswer, index) => {
                     const question = this.quizData[index];
                     const isCorrect = userAnswer !== -1 && userAnswer === question.correctIndex;
                     const isUnanswered = userAnswer === -1;
                     
-                    // Include question if it's wrong or unanswered
                     if (!isCorrect || isUnanswered) {
                         const status = isUnanswered ? 'unanswered' : 'wrong';
                         const cardDiv = this.createQuestionDetails(question, index, status);
@@ -1457,12 +2310,16 @@
                     userAnswerHtml = 'لم يتم الإجابة';
                 }
 
-                // Detect if this is an error type question
                 const isErrorTypeQuestion = 
                     question.type === 'خطأ' || 
                     question.question.includes('خطأ:') || 
                     question.question.includes('الخطأ:') ||
                     question.options.some(opt => opt.includes('*'));
+
+                const isComprehensionQuestion = 
+                    question.type === 'استيعاب' && 
+                    question.Passage && 
+                    question.Passage.length > 0;
 
                 let highlightedQuestion;
                 if (isErrorTypeQuestion) {
@@ -1471,7 +2328,13 @@
                     highlightedQuestion = question.question;
                 }
 
+                const passagePreview = isComprehensionQuestion ? 
+                    `<div class="passage-preview">
+                        <div class="passage-preview-content">${question.Passage.substring(0, 100)}...</div>
+                    </div>` : '';
+
                 const answerDetails = `
+                    ${passagePreview}
                     <div class="question-header">
                         <h4>
                             ${highlightedQuestion}
@@ -1503,8 +2366,99 @@
 
                 const header = cardDiv.querySelector('.question-header');
                 header.insertBefore(copyBtn, header.querySelector('h4'));
+                
+                if (isComprehensionQuestion) {
+                    const previewElement = cardDiv.querySelector('.passage-preview');
+                    previewElement.addEventListener('click', () => {
+                        this.showPassageModal(question.Passage);
+                    });
+                }
 
                 return cardDiv;
+            },
+            
+            showPassageModal(passage) {
+                let modal = document.getElementById('globalPassageModal');
+                if (!modal) {
+                    modal = document.createElement('div');
+                    modal.id = 'globalPassageModal';
+                    modal.className = 'passage-modal';
+                    modal.innerHTML = `
+                        <div class="passage-modal-content">
+                            <button class="passage-modal-close">&times;</button>
+                            <div class="passage-modal-text"></div>
+                        </div>
+                    `;
+                    document.body.appendChild(modal);
+                    
+                    const closeBtn = modal.querySelector('.passage-modal-close');
+                    closeBtn.addEventListener('click', () => {
+                        modal.classList.remove('active');
+                        document.body.style.overflow = '';
+                    });
+                    
+                    modal.addEventListener('click', (e) => {
+                        if (e.target === modal) {
+                            modal.classList.remove('active');
+                            document.body.style.overflow = '';
+                        }
+                    });
+                }
+                
+                modal.querySelector('.passage-modal-text').textContent = passage;
+                modal.classList.add('active');
+                document.body.style.overflow = 'hidden';
+            },
+
+            createPassagePreview(passage) {
+                const previewText = passage.length > 150 ? passage.substring(0, 150) + '...' : passage;
+                return `
+                    <div class="passage-preview" id="passagePreview">
+                        <div class="passage-preview-content">${previewText}</div>
+                    </div>
+                    <div class="passage-modal" id="passageModal">
+                        <div class="passage-modal-content">
+                            <button class="passage-modal-close">&times;</button>
+                            <div class="passage-modal-text">${passage}</div>
+                        </div>
+                    </div>
+                `;
+            },
+            
+            setupPassageModal(passage) {
+                const preview = document.getElementById('passagePreview');
+                const modal = document.getElementById('passageModal');
+                const closeBtn = modal.querySelector('.passage-modal-close');
+                
+                // Function to open the modal
+                const openModal = () => {
+                    modal.classList.add('active');
+                    document.body.style.overflow = 'hidden'; // Prevent scrolling behind modal
+                };
+                
+                // Function to close the modal
+                const closeModal = () => {
+                    modal.classList.remove('active');
+                    document.body.style.overflow = '';
+                };
+                
+                // Event listeners
+                preview.addEventListener('click', openModal);
+                closeBtn.addEventListener('click', closeModal);
+                
+                // Close when clicking outside the content
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) {
+                        closeModal();
+                    }
+                });
+                
+                // Close on escape key
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape' && modal.classList.contains('active')) {
+                        closeModal();
+                    }
+                });
             },
 
             copyAllMarked() {
@@ -1532,6 +2486,651 @@
 
             restartQuiz() {
                 window.location.reload();
+            },
+
+            getQuestionTypePercentages() {
+                return {
+                    error: parseInt(document.getElementById('errorTypeSlider').value) || 20,
+                    comprehension: parseInt(document.getElementById('comprehensionTypeSlider').value) || 20,
+                    analogy: parseInt(document.getElementById('analogyTypeSlider').value) || 20,
+                    completion: parseInt(document.getElementById('completionTypeSlider').value) || 20,
+                    vocabulary: parseInt(document.getElementById('vocabularyTypeSlider').value) || 20
+                };
+            },
+            
+            filterQuestionsByTypeDistribution(questions, typePercentages) {
+                const errorQuestions = questions.filter(q => 
+                    q.type === 'خطأ' || 
+                    q.question.includes('خطأ:') || 
+                    q.question.includes('الخطأ:') ||
+                    q.options.some(opt => opt.includes('*'))
+                );
+                
+                const comprehensionQuestions = questions.filter(q => 
+                    q.type === 'استيعاب' && q.Passage && q.Passage.length > 0
+                );
+                
+                const analogyQuestions = questions.filter(q => 
+                    q.type === 'تناظر'
+                );
+                
+                const completionQuestions = questions.filter(q => 
+                    q.type === 'إكمال'
+                );
+                
+                const vocabularyQuestions = questions.filter(q => 
+                    q.type === 'مفردات'
+                );
+                
+                const otherQuestions = questions.filter(q => 
+                    !errorQuestions.includes(q) && 
+                    !comprehensionQuestions.includes(q) && 
+                    !analogyQuestions.includes(q) && 
+                    !completionQuestions.includes(q) && 
+                    !vocabularyQuestions.includes(q)
+                );
+                
+                const totalQuestions = Math.min(this.questionCount, questions.length);
+                
+                const errorCount = Math.round((typePercentages.error / 100) * totalQuestions);
+                const comprehensionCount = Math.round((typePercentages.comprehension / 100) * totalQuestions);
+                const analogyCount = Math.round((typePercentages.analogy / 100) * totalQuestions);
+                const completionCount = Math.round((typePercentages.completion / 100) * totalQuestions);
+                const vocabularyCount = Math.round((typePercentages.vocabulary / 100) * totalQuestions);
+                
+                const remaining = totalQuestions - errorCount - comprehensionCount - analogyCount - completionCount - vocabularyCount;
+                
+                const shuffleAndSlice = (arr, count) => {
+                    this.shuffleArray(arr);
+                    return arr.slice(0, count);
+                };
+                
+                // If we don't have enough questions of a type, take as many as we can
+                let finalErrorQuestions = shuffleAndSlice(errorQuestions, Math.min(errorQuestions.length, errorCount));
+                let finalComprehensionQuestions = shuffleAndSlice(comprehensionQuestions, Math.min(comprehensionQuestions.length, comprehensionCount));
+                let finalAnalogyQuestions = shuffleAndSlice(analogyQuestions, Math.min(analogyQuestions.length, analogyCount));
+                let finalCompletionQuestions = shuffleAndSlice(completionQuestions, Math.min(completionQuestions.length, completionCount));
+                let finalVocabularyQuestions = shuffleAndSlice(vocabularyQuestions, Math.min(vocabularyQuestions.length, vocabularyCount));
+                
+                // If we need more questions to reach the total, use questions from other types
+                if (remaining > 0) {
+                    const remainingQuestions = [...otherQuestions];
+                    this.shuffleArray(remainingQuestions);
+                    
+                    // Distribute remaining questions evenly
+                    for (let i = 0; i < remaining && remainingQuestions.length > 0; i++) {
+                        const question = remainingQuestions.pop();
+                        if (!question) break;
+                        
+                        // Add to the type with the fewest questions
+                        const types = [
+                            { name: 'error', arr: finalErrorQuestions },
+                            { name: 'comprehension', arr: finalComprehensionQuestions },
+                            { name: 'analogy', arr: finalAnalogyQuestions },
+                            { name: 'completion', arr: finalCompletionQuestions },
+                            { name: 'vocabulary', arr: finalVocabularyQuestions }
+                        ];
+                        
+                        types.sort((a, b) => a.arr.length - b.arr.length);
+                        types[0].arr.push(question);
+                    }
+                }
+                
+                // Combine all question types and return
+                return [
+                    ...finalErrorQuestions,
+                    ...finalComprehensionQuestions,
+                    ...finalAnalogyQuestions,
+                    ...finalCompletionQuestions,
+                    ...finalVocabularyQuestions
+                ];
+            },
+
+            setupTypeSliders() {
+                // Initialize deleted slider tracker if not already initialized
+                if (!this.undoInitialized) {
+                    this.deletedSliders = [];
+                    this.initialSliderTypes = [];
+                    this.undoInitialized = true;
+                    
+                    // Store initial slider types
+                    document.querySelectorAll('.slider-container').forEach(container => {
+                        const typeClass = Array.from(container.classList).find(cls => cls.endsWith('-type'))?.replace('-type', '');
+                        if (typeClass) {
+                            this.initialSliderTypes.push(typeClass);
+                        }
+                    });
+                    
+                    // Set up undo delete button once
+                    const undoDeleteBtn = document.getElementById('undoDeleteBtn');
+                    undoDeleteBtn.addEventListener('click', () => this.handleUndoDeletion());
+                }
+                
+                // We'll use this object to track locked sliders
+                const lockedSliders = new Set();
+                
+                // We'll use this function to synchronize all sliders in real-time
+                const synchronizeSliders = (changedSliderId, newValue) => {
+                    // Get all active sliders
+                    const activeSliders = Array.from(document.querySelectorAll('.slider-input'))
+                        .filter(slider => !lockedSliders.has(slider.id)); // Skip locked sliders
+                    
+                    if (activeSliders.length <= 1) return; // Nothing to synchronize if only one slider
+                    
+                    // Get the current total without the changed slider
+                    let total = 0;
+                    const otherSliders = [];
+                    
+                    activeSliders.forEach(slider => {
+                        if (slider.id === changedSliderId) {
+                            total += parseInt(newValue) || 0;
+                        } else {
+                            const currentValue = parseInt(slider.value) || 0;
+                            total += currentValue;
+                            otherSliders.push({
+                                slider: slider,
+                                value: currentValue
+                            });
+                        }
+                    });
+                    
+                    // If total is not 100, adjust other sliders proportionally
+                    if (total !== 100 && otherSliders.length > 0) {
+                        // How much we need to adjust
+                        const excess = total - 100;
+                        
+                        // Calculate original sum of other sliders
+                        const otherSlidersSum = otherSliders.reduce((sum, item) => sum + item.value, 0);
+                        
+                        if (otherSlidersSum === 0) {
+                            // If other sliders sum to 0, distribute evenly
+                            const valuePerSlider = Math.floor(Math.abs(excess) / otherSliders.length);
+                            otherSliders.forEach(item => {
+                                item.slider.value = excess > 0 ? 
+                                    Math.max(0, item.value - Math.ceil(excess / otherSliders.length)) : 
+                                    item.value + valuePerSlider;
+                                    
+                                // Update value display
+                                const valueId = item.slider.id.replace('Slider', 'Value');
+                                const valueDisplay = document.getElementById(valueId);
+                                if (valueDisplay) {
+                                    valueDisplay.textContent = `${item.slider.value}%`;
+                                }
+                            });
+                        } else {
+                            // Distribute proportionally based on current values
+                            otherSliders.forEach(item => {
+                                // Calculate proportion of this slider relative to total of other sliders
+                                const proportion = item.value / otherSlidersSum;
+                                
+                                // Calculate adjustment amount
+                                const adjustment = Math.round(excess * proportion);
+                                
+                                // Apply adjustment (subtract if excess is positive, add if negative)
+                                const newSliderValue = Math.max(0, Math.min(100, item.value - adjustment));
+                                item.slider.value = newSliderValue;
+                                
+                                // Update value display
+                                const valueId = item.slider.id.replace('Slider', 'Value');
+                                const valueDisplay = document.getElementById(valueId);
+                                if (valueDisplay) {
+                                    valueDisplay.textContent = `${newSliderValue}%`;
+                                }
+                            });
+                        }
+                    }
+                    
+                    // Update the chart
+                    this.updateQuestionTypesChartRealtime();
+                };
+                
+                // Setup lock buttons
+                document.querySelectorAll('.lock-type-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const typeToLock = e.currentTarget.dataset.type;
+                        const sliderId = `${typeToLock}TypeSlider`;
+                        const slider = document.getElementById(sliderId);
+                        const container = e.currentTarget.closest('.slider-container');
+                        
+                        if (lockedSliders.has(sliderId)) {
+                            // Unlock
+                            lockedSliders.delete(sliderId);
+                            btn.classList.remove('locked');
+                            container.classList.remove('locked');
+                            slider.disabled = false;
+                            
+                            // Update tooltip
+                            btn.title = "قفل هذا القسم";
+                        } else {
+                            // Lock
+                            lockedSliders.add(sliderId);
+                            btn.classList.add('locked');
+                            container.classList.add('locked');
+                            slider.disabled = true;
+                            
+                            // Update tooltip
+                            btn.title = "فتح هذا القسم";
+                        }
+                    });
+                });
+                
+                // Setup delete buttons
+                document.querySelectorAll('.delete-type-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const typeToDelete = e.currentTarget.dataset.type;
+                        const containerToDelete = e.currentTarget.closest('.slider-container');
+                        
+                        // Check if we have more than one container before deleting
+                        const remainingContainers = document.querySelectorAll('.slider-container').length;
+                        if (remainingContainers <= 1) {
+                            // Use custom alert instead of browser alert
+                            this.showCustomAlert({
+                                icon: '❓',
+                                title: 'تنبيه',
+                                content: 'تسوق امها؟',
+                                showCancel: false,
+                                confirmText: 'طيب'
+                            });
+                            
+                            // Add shake animation
+                            containerToDelete.classList.add('deleting');
+                            setTimeout(() => {
+                                containerToDelete.classList.remove('deleting');
+                            }, 500);
+                            return;
+                        }
+                        
+                        const sliderId = `${typeToDelete}TypeSlider`;
+                        const sliderInput = document.getElementById(sliderId);
+                        
+                        if (sliderInput) {
+                            // Store deleted slider info for undo
+                            const deletedSlider = {
+                                id: sliderId,
+                                container: containerToDelete.cloneNode(true),
+                                value: sliderInput.value,
+                                name: containerToDelete.querySelector('.slider-label').textContent.trim()
+                            };
+                            
+                            // Add to deletedSliders array
+                            this.deletedSliders.push(deletedSlider);
+                            
+                            // Remove from locked set if it was locked
+                            if (lockedSliders.has(sliderId)) {
+                                lockedSliders.delete(sliderId);
+                            }
+                            
+                            // Synchronize other sliders before removing this one
+                            synchronizeSliders(sliderId, 0);
+                            
+                            // Set the value to 0 before removing
+                            sliderInput.value = 0;
+                            
+                            const valueId = `${typeToDelete}TypeValue`;
+                            const valueDisplay = document.getElementById(valueId);
+                            if (valueDisplay) {
+                                valueDisplay.textContent = '0%';
+                            }
+                            
+                            // Apply exit animations
+                            containerToDelete.classList.add('animate__fadeOutLeft', 'animate__zoomOut');
+                            
+                            // Show undo button immediately
+                            const undoDeleteBtn = document.getElementById('undoDeleteBtn');
+                            undoDeleteBtn.classList.add('active');
+                            
+                            setTimeout(() => {
+                                containerToDelete.remove();
+                                // Update the chart after removal
+                                this.updateQuestionTypesChartRealtime();
+                            }, 500);
+                        }
+                    });
+                });
+                
+                // Setup slider input events
+                document.querySelectorAll('.slider-input').forEach(slider => {
+                    const valueId = slider.id.replace('Slider', 'Value');
+                    const valueDisplay = document.getElementById(valueId);
+                    
+                    if (!valueDisplay) return;
+                    
+                    // Fix for slider value width to prevent element movement
+                    valueDisplay.style.minWidth = '40px';
+                    valueDisplay.style.textAlign = 'center';
+                    
+                    slider.addEventListener('input', (e) => {
+                        // Skip if slider is locked
+                        if (lockedSliders.has(slider.id)) return;
+                        
+                        // Update the value display
+                        const newValue = e.target.value;
+                        valueDisplay.textContent = `${newValue}%`;
+                        
+                        // Synchronize all other sliders in real-time
+                        synchronizeSliders(slider.id, newValue);
+                    });
+                });
+            },
+
+            // Separate method to handle undo deletion
+            handleUndoDeletion() {
+                const undoDeleteBtn = document.getElementById('undoDeleteBtn');
+                
+                if (this.deletedSliders.length > 0) {
+                    // Get the last deleted slider
+                    const lastDeleted = this.deletedSliders.pop();
+                    const container = lastDeleted.container;
+                    const sliderId = lastDeleted.id;
+                    const typeValue = lastDeleted.value;
+                    const typeName = lastDeleted.name;
+                    
+                    // Create new slider container
+                    const sliderContainer = document.createElement('div');
+                    sliderContainer.className = `slider-container ${sliderId.replace('TypeSlider', '-type')}`;
+                    sliderContainer.innerHTML = `
+                        <div class="slider-header">
+                            <span class="slider-label">
+                                <span class="slider-color-dot"></span>
+                                ${typeName}
+                            </span>
+                            <div class="slider-controls">
+                                <span class="slider-value" id="${sliderId.replace('Slider', 'Value')}">${typeValue}%</span>
+                                <button class="lock-type-btn" title="قفل هذا القسم" data-type="${sliderId.replace('TypeSlider', '')}">
+                                    <svg viewBox="0 0 24 24">
+                                        <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/>
+                                    </svg>
+                                </button>
+                                <button class="delete-type-btn" title="حذف هذا القسم" data-type="${sliderId.replace('TypeSlider', '')}">
+                                    <svg viewBox="0 0 24 24">
+                                        <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                        <input type="range" class="slider-input" id="${sliderId}" min="0" max="100" value="${typeValue}">
+                    `;
+                    
+                    // Append the new slider
+                    const slidersList = document.querySelector('.question-type-sliders');
+                    slidersList.appendChild(sliderContainer);
+                    
+                    // Re-attach event listeners
+                    this.setupTypeSliders();
+                    
+                    // Update chart
+                    this.updateQuestionTypesChartRealtime();
+                    
+                    // Keep undo button visible as long as there are deleted sliders
+                    if (this.deletedSliders.length === 0) {
+                        // Check if all types are restored
+                        const currentTypes = [];
+                        document.querySelectorAll('.slider-container').forEach(container => {
+                            const typeClass = Array.from(container.classList).find(cls => cls.endsWith('-type'))?.replace('-type', '');
+                            if (typeClass) {
+                                currentTypes.push(typeClass);
+                            }
+                        });
+                        
+                        let allRestored = true;
+                        for (const type of this.initialSliderTypes) {
+                            if (!currentTypes.includes(type)) {
+                                allRestored = false;
+                                break;
+                            }
+                        }
+                        
+                        if (allRestored) {
+                            undoDeleteBtn.classList.remove('active');
+                        }
+                    }
+                }
+            },
+
+            // Custom alert system
+            showCustomAlert({ icon = '❓', title = 'تنبيه', content = '', confirmText = 'طيب', cancelText = 'إلغاء', showCancel = true, onConfirm = null, onCancel = null }) {
+                const overlay = document.getElementById('customAlertOverlay');
+                const alertIcon = document.getElementById('alertIcon');
+                const alertTitle = document.getElementById('alertTitle');
+                const alertContent = document.getElementById('alertContent');
+                const confirmBtn = document.getElementById('alertConfirmBtn');
+                const cancelBtn = document.getElementById('alertCancelBtn');
+                
+                // Set content
+                alertIcon.textContent = icon;
+                alertTitle.textContent = title;
+                alertContent.textContent = content;
+                confirmBtn.textContent = confirmText;
+                cancelBtn.textContent = cancelText;
+                
+                // Show/hide cancel button
+                cancelBtn.style.display = showCancel ? 'block' : 'none';
+                
+                // Set up buttons
+                confirmBtn.onclick = () => {
+                    overlay.classList.remove('active');
+                    if (onConfirm) onConfirm();
+                };
+                
+                cancelBtn.onclick = () => {
+                    overlay.classList.remove('active');
+                    if (onCancel) onCancel();
+                };
+                
+                // Show alert
+                overlay.classList.add('active');
+            },
+
+            updateQuestionTypesChartRealtime() {
+                const typeValues = [];
+                const typeColors = [];
+                const typeLabels = [];
+                
+                document.querySelectorAll('.slider-container').forEach(container => {
+                    const slider = container.querySelector('.slider-input');
+                    if (slider) {
+                        const value = parseInt(slider.value);
+                        const typeClass = Array.from(container.classList)
+                            .find(cls => cls.endsWith('-type'))
+                            ?.replace('-type', '');
+                            
+                        if (typeClass) {
+                            let color;
+                            let label;
+                            
+                            switch(typeClass) {
+                                case 'error':
+                                    color = '#FF5252';
+                                    label = 'أسئلة الخطأ';
+                                    break;
+                                case 'comprehension':
+                                    color = '#2196F3';
+                                    label = 'استيعاب المقروء';
+                                    break;
+                                case 'analogy':
+                                    color = '#FFC107';
+                                    label = 'تناظر لفظي';
+                                    break;
+                                case 'completion':
+                                    color = '#4CAF50';
+                                    label = 'إكمال الجمل';
+                                    break;
+                                case 'vocabulary':
+                                    color = '#9C27B0';
+                                    label = 'مفردات';
+                                    break;
+                            }
+                            
+                            typeValues.push(value);
+                            typeColors.push(color);
+                            typeLabels.push(label);
+                        }
+                    }
+                });
+                
+                if (this.typesChart) {
+                    this.typesChart.data.datasets[0].data = typeValues;
+                    this.typesChart.data.datasets[0].backgroundColor = typeColors;
+                    this.typesChart.data.labels = typeLabels;
+                    this.typesChart.update('none'); // Update without animation for smoother experience
+                }
+                
+                // Calculate total for information purposes
+                const total = typeValues.reduce((sum, val) => sum + val, 0);
+                
+                // Keep the title "نسب الأسئلة" in the chart center
+                // (don't need to change this since user already updated it)
+            },
+            
+            updateQuestionTypesChart() {
+                this.updateQuestionTypesChartRealtime();
+                
+                // Full animation when called for complete updates
+                if (this.typesChart) {
+                    this.typesChart.update();
+                }
+            },
+            
+            initQuestionTypesChart() {
+                const ctx = document.getElementById('questionTypesChart').getContext('2d');
+                
+                // Estimate question counts based on percentages and total question count
+                const questionCount = parseInt(document.getElementById('questionCount').value) || 20;
+                
+                this.typesChart = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['تناظر', 'إكمال الجمل', 'الخطأ السياقي', 'استيعاب المقروء', 'المفردة الشاذة'],
+                        datasets: [{
+                            data: [20, 20, 20, 20, 20],
+                            backgroundColor: [
+                                '#FFC107', // تناظر
+                                '#4CAF50', // إكمال
+                                '#FF5252', // خطأ
+                                '#2196F3', // استيعاب
+                                '#9C27B0'  // مفردات
+                            ],
+                            borderWidth: 0,
+                            hoverOffset: 15
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        cutout: '40%',
+                        layout: {
+                            padding: {
+                                top: 30,
+                                bottom: 30,
+                                left: 30,
+                                right: 30
+                            }
+                        },
+                        animation: {
+                            duration: 0
+                        },
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        const percentage = context.raw;
+                                        const questionCount = parseInt(document.getElementById('questionCount').value) || 20;
+                                        const questionNum = Math.round((percentage / 100) * questionCount);
+                                        return `${questionNum} سؤال`;
+                                    }
+                                },
+                                backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                                padding: 12,
+                                cornerRadius: 6,
+                                titleFont: {
+                                    size: 14,
+                                    weight: 'bold'
+                                },
+                                bodyFont: {
+                                    size: 14
+                                },
+                                displayColors: false,
+                                position: 'custom',
+                                enabled: true,
+                                titleAlign: 'center',
+                                bodyAlign: 'center',
+                                caretSize: 10,
+                                caretPadding: 15,
+                                callbacks: {
+                                    title: function() {
+                                        return '';
+                                    }
+                                }
+                            }
+                        },
+                        onClick: function(event, elements) {
+                            const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+                            if (isMobile && elements && elements.length > 0) {
+                                const index = elements[0].index;
+                                const percentage = this.data.datasets[0].data[index];
+                                const label = this.data.labels[index];
+                                const questionCount = parseInt(document.getElementById('questionCount').value) || 20;
+                                const questionNum = Math.round((percentage / 100) * questionCount);
+                                
+                                // Show mobile tooltip
+                                const mobileTooltip = document.getElementById('mobileTooltip');
+                                mobileTooltip.textContent = `${label}: ${questionNum} سؤال`;
+                                
+                                // Position the tooltip
+                                const chart = document.getElementById('questionTypesChart');
+                                const chartRect = chart.getBoundingClientRect();
+                                const centerX = chartRect.left + chartRect.width / 2;
+                                const centerY = chartRect.top + chartRect.height / 2;
+                                
+                                mobileTooltip.style.left = `${centerX}px`;
+                                mobileTooltip.style.top = `${centerY - 60}px`;
+                                mobileTooltip.classList.add('active');
+                                
+                                // Hide tooltip after delay
+                                setTimeout(() => {
+                                    mobileTooltip.classList.remove('active');
+                                }, 2000);
+                            }
+                        }.bind(this.typesChart)
+                    }
+                });
+                
+                // Custom tooltip position to move it away from center
+                Chart.Tooltip.positioners.custom = function(elements, eventPosition) {
+                    const chart = this.chart;
+                    
+                    if (!elements.length) {
+                        return false;
+                    }
+                    
+                    const { x, y } = eventPosition;
+                    const chartWidth = chart.width;
+                    const chartHeight = chart.height;
+                    const chartCenterX = chartWidth / 2;
+                    const chartCenterY = chartHeight / 2;
+                    
+                    // Calculate vector from center to event position
+                    const vectorX = x - chartCenterX;
+                    const vectorY = y - chartCenterY;
+                    
+                    // Normalize the vector
+                    const length = Math.sqrt(vectorX * vectorX + vectorY * vectorY);
+                    const normalizedX = vectorX / length;
+                    const normalizedY = vectorY / length;
+                    
+                    // Position tooltip in the direction of the mouse but outside the chart
+                    // Use the radius of the chart plus some padding
+                    const radius = Math.min(chartWidth, chartHeight) / 2;
+                    const padding = 40;
+                    
+                    return {
+                        x: chartCenterX + normalizedX * (radius + padding),
+                        y: chartCenterY + normalizedY * (radius + padding)
+                    };
+                };
             }
         };
 
