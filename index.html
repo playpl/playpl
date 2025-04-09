@@ -2489,38 +2489,115 @@
             },
 
             getQuestionTypePercentages() {
-                return {
-                    error: parseInt(document.getElementById('errorTypeSlider').value) || 20,
-                    comprehension: parseInt(document.getElementById('comprehensionTypeSlider').value) || 20,
-                    analogy: parseInt(document.getElementById('analogyTypeSlider').value) || 20,
-                    completion: parseInt(document.getElementById('completionTypeSlider').value) || 20,
-                    vocabulary: parseInt(document.getElementById('vocabularyTypeSlider').value) || 20
+                // Create an object to store the percentages
+                const percentages = {
+                    error: 0,
+                    comprehension: 0,
+                    analogy: 0,
+                    completion: 0, 
+                    vocabulary: 0
                 };
+                
+                // Get all existing sliders
+                const errorSlider = document.getElementById('errorTypeSlider');
+                const comprehensionSlider = document.getElementById('comprehensionTypeSlider');
+                const analogySlider = document.getElementById('analogyTypeSlider');
+                const completionSlider = document.getElementById('completionTypeSlider');
+                const vocabularySlider = document.getElementById('vocabularyTypeSlider');
+                
+                // Count how many sliders actually exist
+                let sliderCount = 0;
+                let totalValue = 0;
+                
+                // Only add values from sliders that exist in the DOM
+                if (errorSlider) {
+                    percentages.error = parseInt(errorSlider.value) || 0;
+                    totalValue += percentages.error;
+                    sliderCount++;
+                }
+                
+                if (comprehensionSlider) {
+                    percentages.comprehension = parseInt(comprehensionSlider.value) || 0;
+                    totalValue += percentages.comprehension;
+                    sliderCount++;
+                }
+                
+                if (analogySlider) {
+                    percentages.analogy = parseInt(analogySlider.value) || 0;
+                    totalValue += percentages.analogy;
+                    sliderCount++;
+                }
+                
+                if (completionSlider) {
+                    percentages.completion = parseInt(completionSlider.value) || 0;
+                    totalValue += percentages.completion;
+                    sliderCount++;
+                }
+                
+                if (vocabularySlider) {
+                    percentages.vocabulary = parseInt(vocabularySlider.value) || 0;
+                    totalValue += percentages.vocabulary;
+                    sliderCount++;
+                }
+                
+                // If no sliders exist or total is 0, distribute evenly among existing types
+                if (sliderCount === 0 || totalValue === 0) {
+                    const evenShare = Math.floor(100 / sliderCount);
+                    
+                    if (errorSlider) percentages.error = evenShare;
+                    if (comprehensionSlider) percentages.comprehension = evenShare;
+                    if (analogySlider) percentages.analogy = evenShare;
+                    if (completionSlider) percentages.completion = evenShare;
+                    if (vocabularySlider) percentages.vocabulary = evenShare;
+                }
+                
+                return percentages;
             },
             
             filterQuestionsByTypeDistribution(questions, typePercentages) {
-                const errorQuestions = questions.filter(q => 
-                    q.type === 'خطأ' || 
-                    q.question.includes('خطأ:') || 
-                    q.question.includes('الخطأ:') ||
-                    q.options.some(opt => opt.includes('*'))
-                );
+                // Only include question types that have percentages > 0
+                const activeTypes = [];
                 
-                const comprehensionQuestions = questions.filter(q => 
-                    q.type === 'استيعاب' && q.Passage && q.Passage.length > 0
-                );
+                if (typePercentages.error > 0) activeTypes.push('error');
+                if (typePercentages.comprehension > 0) activeTypes.push('comprehension');
+                if (typePercentages.analogy > 0) activeTypes.push('analogy');
+                if (typePercentages.completion > 0) activeTypes.push('completion');
+                if (typePercentages.vocabulary > 0) activeTypes.push('vocabulary');
                 
-                const analogyQuestions = questions.filter(q => 
+                // If no types are active, return all questions
+                if (activeTypes.length === 0) {
+                    this.shuffleArray(questions);
+                    return questions.slice(0, this.questionCount);
+                }
+                
+                // Normalize percentages among active types to ensure they sum to 100%
+                const totalActivePercentage = activeTypes.reduce((sum, type) => sum + typePercentages[type], 0);
+                const normalizedPercentages = {};
+                
+                activeTypes.forEach(type => {
+                    normalizedPercentages[type] = (typePercentages[type] / totalActivePercentage) * 100;
+                });
+                
+                // Filter questions by active types
+                const errorQuestions = activeTypes.includes('error') ? questions.filter(q => 
+                    q.type === 'خطأ'
+                ) : [];
+                
+                const comprehensionQuestions = activeTypes.includes('comprehension') ? questions.filter(q => 
+                    q.type === 'استيعاب'
+                ) : [];
+                
+                const analogyQuestions = activeTypes.includes('analogy') ? questions.filter(q => 
                     q.type === 'تناظر'
-                );
+                ) : [];
                 
-                const completionQuestions = questions.filter(q => 
-                    q.type === 'إكمال'
-                );
+                const completionQuestions = activeTypes.includes('completion') ? questions.filter(q => 
+                    q.type === 'اكمال'
+                ) : [];
                 
-                const vocabularyQuestions = questions.filter(q => 
-                    q.type === 'مفردات'
-                );
+                const vocabularyQuestions = activeTypes.includes('vocabulary') ? questions.filter(q => 
+                    q.type === 'مفردة'
+                ) : [];
                 
                 const otherQuestions = questions.filter(q => 
                     !errorQuestions.includes(q) && 
@@ -2532,58 +2609,78 @@
                 
                 const totalQuestions = Math.min(this.questionCount, questions.length);
                 
-                const errorCount = Math.round((typePercentages.error / 100) * totalQuestions);
-                const comprehensionCount = Math.round((typePercentages.comprehension / 100) * totalQuestions);
-                const analogyCount = Math.round((typePercentages.analogy / 100) * totalQuestions);
-                const completionCount = Math.round((typePercentages.completion / 100) * totalQuestions);
-                const vocabularyCount = Math.round((typePercentages.vocabulary / 100) * totalQuestions);
+                // Calculate counts for each active type based on normalized percentages
+                const counts = {};
+                let totalAllocated = 0;
                 
-                const remaining = totalQuestions - errorCount - comprehensionCount - analogyCount - completionCount - vocabularyCount;
+                activeTypes.forEach(type => {
+                    counts[type] = Math.floor((normalizedPercentages[type] / 100) * totalQuestions);
+                    totalAllocated += counts[type];
+                });
+                
+                // Distribute remaining questions based on decimal parts
+                const remaining = totalQuestions - totalAllocated;
+                
+                if (remaining > 0) {
+                    const typesByDecimal = activeTypes.map(type => {
+                        const exactCount = (normalizedPercentages[type] / 100) * totalQuestions;
+                        const decimalPart = exactCount - Math.floor(exactCount);
+                        return { type, decimalPart };
+                    }).sort((a, b) => b.decimalPart - a.decimalPart);
+                    
+                    for (let i = 0; i < remaining; i++) {
+                        counts[typesByDecimal[i % typesByDecimal.length].type]++;
+                    }
+                }
                 
                 const shuffleAndSlice = (arr, count) => {
                     this.shuffleArray(arr);
                     return arr.slice(0, count);
                 };
                 
-                // If we don't have enough questions of a type, take as many as we can
-                let finalErrorQuestions = shuffleAndSlice(errorQuestions, Math.min(errorQuestions.length, errorCount));
-                let finalComprehensionQuestions = shuffleAndSlice(comprehensionQuestions, Math.min(comprehensionQuestions.length, comprehensionCount));
-                let finalAnalogyQuestions = shuffleAndSlice(analogyQuestions, Math.min(analogyQuestions.length, analogyCount));
-                let finalCompletionQuestions = shuffleAndSlice(completionQuestions, Math.min(completionQuestions.length, completionCount));
-                let finalVocabularyQuestions = shuffleAndSlice(vocabularyQuestions, Math.min(vocabularyQuestions.length, vocabularyCount));
+                // Get questions for each type based on calculated counts
+                let finalQuestions = [];
                 
-                // If we need more questions to reach the total, use questions from other types
-                if (remaining > 0) {
-                    const remainingQuestions = [...otherQuestions];
-                    this.shuffleArray(remainingQuestions);
-                    
-                    // Distribute remaining questions evenly
-                    for (let i = 0; i < remaining && remainingQuestions.length > 0; i++) {
-                        const question = remainingQuestions.pop();
-                        if (!question) break;
-                        
-                        // Add to the type with the fewest questions
-                        const types = [
-                            { name: 'error', arr: finalErrorQuestions },
-                            { name: 'comprehension', arr: finalComprehensionQuestions },
-                            { name: 'analogy', arr: finalAnalogyQuestions },
-                            { name: 'completion', arr: finalCompletionQuestions },
-                            { name: 'vocabulary', arr: finalVocabularyQuestions }
-                        ];
-                        
-                        types.sort((a, b) => a.arr.length - b.arr.length);
-                        types[0].arr.push(question);
-                    }
+                if (activeTypes.includes('error')) {
+                    const errorCount = counts['error'] || 0;
+                    finalQuestions = [...finalQuestions, 
+                        ...shuffleAndSlice(errorQuestions, Math.min(errorQuestions.length, errorCount))];
                 }
                 
-                // Combine all question types and return
-                return [
-                    ...finalErrorQuestions,
-                    ...finalComprehensionQuestions,
-                    ...finalAnalogyQuestions,
-                    ...finalCompletionQuestions,
-                    ...finalVocabularyQuestions
-                ];
+                if (activeTypes.includes('comprehension')) {
+                    const comprehensionCount = counts['comprehension'] || 0;
+                    finalQuestions = [...finalQuestions, 
+                        ...shuffleAndSlice(comprehensionQuestions, Math.min(comprehensionQuestions.length, comprehensionCount))];
+                }
+                
+                if (activeTypes.includes('analogy')) {
+                    const analogyCount = counts['analogy'] || 0;
+                    finalQuestions = [...finalQuestions, 
+                        ...shuffleAndSlice(analogyQuestions, Math.min(analogyQuestions.length, analogyCount))];
+                }
+                
+                if (activeTypes.includes('completion')) {
+                    const completionCount = counts['completion'] || 0;
+                    finalQuestions = [...finalQuestions, 
+                        ...shuffleAndSlice(completionQuestions, Math.min(completionQuestions.length, completionCount))];
+                }
+                
+                if (activeTypes.includes('vocabulary')) {
+                    const vocabularyCount = counts['vocabulary'] || 0;
+                    finalQuestions = [...finalQuestions, 
+                        ...shuffleAndSlice(vocabularyQuestions, Math.min(vocabularyQuestions.length, vocabularyCount))];
+                }
+                
+                // If we still need more questions, use questions from other types
+                if (finalQuestions.length < totalQuestions && otherQuestions.length > 0) {
+                    const deficit = totalQuestions - finalQuestions.length;
+                    const otherQuestionsToAdd = shuffleAndSlice(otherQuestions, Math.min(otherQuestions.length, deficit));
+                    finalQuestions = [...finalQuestions, ...otherQuestionsToAdd];
+                }
+                
+                // Final shuffle to make sure the question order is random
+                this.shuffleArray(finalQuestions);
+                return finalQuestions;
             },
 
             setupTypeSliders() {
@@ -2926,47 +3023,41 @@
                 const typeColors = [];
                 const typeLabels = [];
                 
-                document.querySelectorAll('.slider-container').forEach(container => {
-                    const slider = container.querySelector('.slider-input');
-                    if (slider) {
-                        const value = parseInt(slider.value);
-                        const typeClass = Array.from(container.classList)
-                            .find(cls => cls.endsWith('-type'))
-                            ?.replace('-type', '');
-                            
-                        if (typeClass) {
-                            let color;
-                            let label;
-                            
-                            switch(typeClass) {
-                                case 'error':
-                                    color = '#FF5252';
-                                    label = 'أسئلة الخطأ';
-                                    break;
-                                case 'comprehension':
-                                    color = '#2196F3';
-                                    label = 'استيعاب المقروء';
-                                    break;
-                                case 'analogy':
-                                    color = '#FFC107';
-                                    label = 'تناظر لفظي';
-                                    break;
-                                case 'completion':
-                                    color = '#4CAF50';
-                                    label = 'إكمال الجمل';
-                                    break;
-                                case 'vocabulary':
-                                    color = '#9C27B0';
-                                    label = 'مفردات';
-                                    break;
-                            }
-                            
-                            typeValues.push(value);
-                            typeColors.push(color);
-                            typeLabels.push(label);
-                        }
-                    }
-                });
+                // Only include types that actually exist in the DOM
+                if (document.getElementById('analogyTypeSlider')) {
+                    const value = parseInt(document.getElementById('analogyTypeSlider').value) || 0;
+                    typeValues.push(value);
+                    typeColors.push('#FFC107');
+                    typeLabels.push('تناظر');
+                }
+                
+                if (document.getElementById('completionTypeSlider')) {
+                    const value = parseInt(document.getElementById('completionTypeSlider').value) || 0;
+                    typeValues.push(value);
+                    typeColors.push('#4CAF50');
+                    typeLabels.push('اكمال');
+                }
+                
+                if (document.getElementById('errorTypeSlider')) {
+                    const value = parseInt(document.getElementById('errorTypeSlider').value) || 0;
+                    typeValues.push(value);
+                    typeColors.push('#FF5252');
+                    typeLabels.push('خطأ');
+                }
+                
+                if (document.getElementById('comprehensionTypeSlider')) {
+                    const value = parseInt(document.getElementById('comprehensionTypeSlider').value) || 0;
+                    typeValues.push(value);
+                    typeColors.push('#2196F3');
+                    typeLabels.push('استيعاب');
+                }
+                
+                if (document.getElementById('vocabularyTypeSlider')) {
+                    const value = parseInt(document.getElementById('vocabularyTypeSlider').value) || 0;
+                    typeValues.push(value);
+                    typeColors.push('#9C27B0');
+                    typeLabels.push('مفردة');
+                }
                 
                 if (this.typesChart) {
                     this.typesChart.data.datasets[0].data = typeValues;
@@ -2994,22 +3085,50 @@
             initQuestionTypesChart() {
                 const ctx = document.getElementById('questionTypesChart').getContext('2d');
                 
-                // Estimate question counts based on percentages and total question count
-                const questionCount = parseInt(document.getElementById('questionCount').value) || 20;
+                // Get actual values from sliders
+                const typePercentages = this.getQuestionTypePercentages();
+                const typeValues = [];
+                const typeColors = [];
+                const typeLabels = [];
+                
+                // Only include types that exist in the DOM
+                if (document.getElementById('analogyTypeSlider')) {
+                    typeValues.push(typePercentages.analogy);
+                    typeColors.push('#FFC107');
+                    typeLabels.push('تناظر');
+                }
+                
+                if (document.getElementById('completionTypeSlider')) {
+                    typeValues.push(typePercentages.completion);
+                    typeColors.push('#4CAF50');
+                    typeLabels.push('اكمال');
+                }
+                
+                if (document.getElementById('errorTypeSlider')) {
+                    typeValues.push(typePercentages.error);
+                    typeColors.push('#FF5252');
+                    typeLabels.push('خطأ');
+                }
+                
+                if (document.getElementById('comprehensionTypeSlider')) {
+                    typeValues.push(typePercentages.comprehension);
+                    typeColors.push('#2196F3');
+                    typeLabels.push('استيعاب');
+                }
+                
+                if (document.getElementById('vocabularyTypeSlider')) {
+                    typeValues.push(typePercentages.vocabulary);
+                    typeColors.push('#9C27B0');
+                    typeLabels.push('مفردة');
+                }
                 
                 this.typesChart = new Chart(ctx, {
                     type: 'doughnut',
                     data: {
-                        labels: ['تناظر', 'إكمال الجمل', 'الخطأ السياقي', 'استيعاب المقروء', 'المفردة الشاذة'],
+                        labels: typeLabels,
                         datasets: [{
-                            data: [20, 20, 20, 20, 20],
-                            backgroundColor: [
-                                '#FFC107', // تناظر
-                                '#4CAF50', // إكمال
-                                '#FF5252', // خطأ
-                                '#2196F3', // استيعاب
-                                '#9C27B0'  // مفردات
-                            ],
+                            data: typeValues,
+                            backgroundColor: typeColors,
                             borderWidth: 0,
                             hoverOffset: 15
                         }]
