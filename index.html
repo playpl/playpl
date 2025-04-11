@@ -17,7 +17,7 @@
             --unanswered: #F59E0B;
             --marked: #FFD700;
         }
-
+        
         * {
             box-sizing: border-box;
             margin: 0;
@@ -1842,23 +1842,32 @@
             
             calculateMastery(stats) {
                 if (!stats) return 0;
-                
+
                 const attempts = stats.attempts || 0;
                 const correct = stats.correct || 0;
                 const incorrect = attempts - correct;
-                
+
                 if (attempts === 0) return 0;
+
+                // Base requirement: 7 correct answers for a question with no errors
+                const baseRequirement = 7;
                 
-                if (correct < 10) {
-                    return Math.round((correct / 10) * 100);
+                // Calculate required correct answers based on number of incorrect answers
+                // For each incorrect answer, we increase the requirement
+                const requiredCorrect = baseRequirement * (incorrect + 1);
+                
+                // If we haven't reached the minimum required correct answers
+                if (correct < requiredCorrect) {
+                    return Math.round((correct / requiredCorrect) * 100);
                 }
                 
-                if (incorrect === 0) return 100;
-
-                const requiredCorrect = incorrect * 10;
+                // If no incorrect answers and we've met the base requirement
+                if (incorrect === 0 && correct >= baseRequirement) {
+                    return 100;
+                }
                 
                 let mastery = Math.min(100, Math.round((correct / requiredCorrect) * 100));
-                
+
                 return mastery;
             },
 
