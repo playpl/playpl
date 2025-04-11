@@ -1468,7 +1468,7 @@
                 
                 <div class="question-count">
                     <label for="testDuration">وقت الاختبار (دقائق):</label>
-                    <input type="number" id="testDuration" min="1" max="120" value="8">
+                    <input type="number" id="testDuration" min="1" max="1000" value="9">
                 </div>
                 
                 <div class="time-per-question" id="timePerQuestion">
@@ -1674,13 +1674,13 @@
                 document.getElementById('copyAllMarkedBtn').addEventListener('click', () => this.copyAllMarked());
                 
                 document.getElementById('questionCount').addEventListener('input', (e) => {
-                    this.questionCount = Math.min(Math.max(5, parseInt(e.target.value) || 20), 1000);
+                    this.questionCount = Math.min(Math.max(5, parseInt(e.target.value) || 20), 6000);
                     e.target.value = this.questionCount;
                     this.updateTimePerQuestion();
                 });
                 
                 document.getElementById('testDuration').addEventListener('input', (e) => {
-                    this.testDuration = Math.min(Math.max(1, parseInt(e.target.value) || 30), 120);
+                    this.testDuration = Math.min(Math.max(1, parseInt(e.target.value) || 30), 1000);
                     e.target.value = this.testDuration;
                     this.updateTimePerQuestion();
                 });
@@ -1849,8 +1849,8 @@
 
                 if (attempts === 0) return 0;
 
-                // Base requirement: 7 correct answers for a question with no errors
-                const baseRequirement = 7;
+                // Base requirement: 10 correct answers for a question with no errors
+                const baseRequirement = 10;
                 
                 // Calculate required correct answers based on number of incorrect answers
                 // For each incorrect answer, we increase the requirement
