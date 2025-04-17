@@ -147,6 +147,41 @@
             color: var(--text-color);
             font-weight: bold;
         }
+        
+        .free-runner-info {
+            margin-top: 0.5rem;
+            font-size: 0.9rem;
+            color: var(--primary-color);
+        }
+        
+        .mastery-info-container {
+            margin-top: 1rem;
+            background: var(--card-bg);
+            border-radius: 10px;
+            padding: 0.75rem;
+            border-right: 4px solid var(--correct);
+            cursor: pointer;
+        }
+        
+        .mastery-info-title {
+            font-weight: bold;
+            margin-bottom: 0.25rem;
+            color: var(--correct);
+            font-size: 0.95rem;
+        }
+        
+        .mastery-info-content {
+            font-size: 0.85rem;
+        }
+        
+        #requiredCorrectAnswers {
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+        
+        #totalQuestionsCount {
+            font-weight: bold;
+        }
 
         .question-card {
             background: var(--card-bg);
@@ -1494,6 +1529,14 @@
                 <div class="time-per-question free-runner-info" id="freeRunnerInfo" style="display: none;">
                     الوضع الحر: اختبار مفتوح بدون وقت محدد، يمكنك الاستمرار حتى تقرر الانتهاء
                 </div>
+                
+                <div class="mastery-info-container" id="masteryInfoContainer">
+                    <div class="mastery-info-title">الإتقان 100%</div>
+                    <div class="mastery-info-content">
+                        الإجابات المطلوبة: <span id="requiredCorrectAnswers">...</span>
+                        | الأسئلة: <span id="totalQuestionsCount">...</span>
+                    </div>
+                </div>
             </div>
             
             <button class="nav-btn" id="startQuizBtn">بدء الاختبار</button>
@@ -1631,6 +1674,7 @@
                 this.addEventListeners();
                 this.updateMarkedCount();
                 this.updateTimePerQuestion();
+                this.updateMasteryRequirements(); // This is now async
                 this.initQuestionTypesChart();
                 this.setupTypeSliders();
             },
@@ -1650,6 +1694,48 @@
                     : `${seconds} ثانية`;
                 
                 document.getElementById('timePerQuestion').textContent = `الوقت المخصص لكل سؤال: ${timeText}`;
+            },
+            
+            async updateMasteryRequirements() {
+                try {
+                    // Fetch all questions from Firebase
+                    const snapshot = await db.collection('questions').get();
+                    let totalRequiredCorrect = 0;
+                    let totalQuestions = 0;
+                    
+                    // Process each question
+                    snapshot.forEach(doc => {
+                        const question = doc.data();
+                        if (question.stats) {
+                            totalQuestions++;
+                            
+                            const attempts = question.stats.attempts || 0;
+                            const correct = question.stats.correct || 0;
+                            const incorrect = attempts - correct;
+                            
+                            // Base requirement: 7 correct answers for a question with no errors
+                            const baseRequirement = 7;
+                            
+                            // Calculate required correct answers based on number of incorrect answers
+                            const requiredCorrect = baseRequirement * (incorrect + 1);
+                            
+                            // If we've already met or exceeded the requirement, no more needed
+                            if (correct >= requiredCorrect) {
+                                // Already mastered
+                            } else {
+                                // Add the remaining needed correct answers to the total
+                                totalRequiredCorrect += (requiredCorrect - correct);
+                            }
+                        }
+                    });
+                    
+                    // Update the UI
+                    document.getElementById('requiredCorrectAnswers').textContent = totalRequiredCorrect;
+                    document.getElementById('totalQuestionsCount').textContent = totalQuestions;
+                } catch (error) {
+                    console.error('Error calculating mastery requirements:', error);
+                    document.getElementById('requiredCorrectAnswers').textContent = '?';
+                }
             },
             
             async updateMarkedCount() {
@@ -1672,6 +1758,15 @@
                 document.getElementById('submitBtn').addEventListener('click', () => this.showResults());
                 document.getElementById('restartQuizBtn').addEventListener('click', () => this.restartQuiz());
                 document.getElementById('copyAllMarkedBtn').addEventListener('click', () => this.copyAllMarked());
+                
+                // Add refresh button for mastery requirements
+                document.getElementById('masteryInfoContainer').addEventListener('click', () => {
+                    // Visual feedback that we're refreshing
+                    document.getElementById('requiredCorrectAnswers').textContent = '...';
+                    document.getElementById('totalQuestionsCount').textContent = '...';
+                    // Update the mastery requirements
+                    this.updateMasteryRequirements();
+                });
                 
                 document.getElementById('questionCount').addEventListener('input', (e) => {
                     this.questionCount = Math.min(Math.max(5, parseInt(e.target.value) || 20), 6000);
