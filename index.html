@@ -594,6 +594,78 @@
             color: var(--marked);
             border: 1px solid var(--marked);
         }
+        
+        .mark-btn {
+            width: 28px;
+            height: 28px;
+        }
+        
+        .mastery-shortcut-btn {
+            position: absolute;
+            top: 1rem;
+            right: 3.2rem;
+            background: none;
+            border: none;
+            color: var(--correct);
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            z-index: 5;
+        }
+        
+        .delete-mastery-btn {
+            position: absolute;
+            top: 1rem;
+            right: 5.4rem;
+            background: none;
+            border: none;
+            color: var(--wrong);
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            z-index: 5;
+        }
+        
+        .mastery-shortcut-btn svg, .delete-mastery-btn svg {
+            width: 24px;
+            height: 24px;
+        }
+        
+        .mastery-shortcut-btn svg {
+            fill: var(--correct);
+        }
+        
+        .delete-mastery-btn svg {
+            fill: var(--wrong);
+        }
+        
+        .mastery-shortcut-btn:hover {
+            background: rgba(0, 200, 83, 0.15);
+        }
+        
+        .delete-mastery-btn:hover {
+            background: rgba(213, 0, 0, 0.15);
+        }
+        
+        .mastery-shortcut-btn.active {
+            background: rgba(0, 200, 83, 0.3);
+            transform: scale(1.1);
+        }
+        
+        .delete-mastery-btn.active {
+            background: rgba(213, 0, 0, 0.3);
+            transform: scale(1.1);
+        }
 
         @media (min-width: 768px) {
             .container {
@@ -1717,7 +1789,8 @@
                             const baseRequirement = 7;
                             
                             // Calculate required correct answers based on number of incorrect answers
-                            const requiredCorrect = baseRequirement * (incorrect + 1);
+                            // For each incorrect answer, we add 4 more required correct answers
+                            const requiredCorrect = baseRequirement + (incorrect * 4);
                             
                             // If we've already met or exceeded the requirement, no more needed
                             if (correct >= requiredCorrect) {
@@ -1890,7 +1963,7 @@
                     const typePercentages = this.getQuestionTypePercentages();
                     const filteredByType = this.filterQuestionsByTypeDistribution(allQuestions, typePercentages);
                     
-                    if (filteredByType.length >= Math.min(this.questionCount, allQuestions.length)) {
+                    if (!this.freeRunnerMode && filteredByType.length >= Math.min(this.questionCount, allQuestions.length)) {
                         allQuestions.length = 0;
                         allQuestions.push(...filteredByType);
                     }
@@ -1948,8 +2021,8 @@
                 const baseRequirement = 7;
                 
                 // Calculate required correct answers based on number of incorrect answers
-                // For each incorrect answer, we increase the requirement
-                const requiredCorrect = baseRequirement * (incorrect + 1);
+                // For each incorrect answer, we add 4 more required correct answers
+                const requiredCorrect = baseRequirement + (incorrect * 4);
                 
                 // If we haven't reached the minimum required correct answers
                 if (correct < requiredCorrect) {
@@ -2009,6 +2082,16 @@
                             <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
                         </svg>
                     </button>
+                    <button class="mastery-shortcut-btn" id="masteryShortcutBtn" title="اختصار الإتقان">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M9,16.17L4.83,12l-1.42,1.41L9,19 21,7l-1.41-1.41L9,16.17z"/>
+                        </svg>
+                    </button>
+                    <button class="delete-mastery-btn" id="deleteMasteryBtn" title="حذف الإتقان">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z"/>
+                        </svg>
+                    </button>
                     <div class="mastery-indicator ${isMarked ? 'marked' : ''}">
                         ${isMarked ? 'سؤال معلّم' : `الإتقان: ${question.masteryPercent}%`}
                     </div>
@@ -2043,6 +2126,18 @@
                 markBtn.onclick = (e) => {
                     e.stopPropagation();
                     this.toggleMarkQuestion();
+                };
+                
+                const masteryShortcutBtn = questionDiv.querySelector('#masteryShortcutBtn');
+                masteryShortcutBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    this.setQuestionMastery();
+                };
+                
+                const deleteMasteryBtn = questionDiv.querySelector('#deleteMasteryBtn');
+                deleteMasteryBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    this.deleteQuestionMastery();
                 };
 
                 container.appendChild(questionDiv);
@@ -2139,6 +2234,108 @@
                     masteryIndicator.textContent = !isMarked ? 'سؤال معلّم' : `الإتقان: ${question.masteryPercent}%`;
                 }
             },
+            
+            setQuestionMastery() {
+                const question = this.quizData[this.currentQuestion];
+                const questionId = question.id;
+                
+                // Show a brief animation on the button to indicate it's working
+                const masteryBtn = document.querySelector('#masteryShortcutBtn');
+                masteryBtn.classList.add('active');
+                
+                // Set Firebase values for mastery (incorrect: 0, correct: 7)
+                db.collection('questions').doc(questionId).update({
+                    'stats.attempts': 7,
+                    'stats.correct': 7
+                }).then(() => {
+                    // Update local data
+                    question.stats.attempts = 7;
+                    question.stats.correct = 7;
+                    question.masteryPercent = 100;
+                    
+                    // Update UI
+                    const masteryIndicator = document.querySelector('.mastery-indicator');
+                    if (masteryIndicator && !masteryIndicator.classList.contains('marked')) {
+                        masteryIndicator.textContent = `الإتقان: 100%`;
+                    }
+                    
+                    // Show success feedback
+                    this.showCustomAlert({
+                        icon: '✓',
+                        title: 'تم تعيين الإتقان',
+                        content: 'تم تعيين هذا السؤال كمتقن بنجاح',
+                        confirmText: 'حسناً',
+                        showCancel: false
+                    });
+                    
+                    // Remove animation
+                    setTimeout(() => {
+                        masteryBtn.classList.remove('active');
+                    }, 500);
+                }).catch(error => {
+                    console.error('Error updating mastery status:', error);
+                    masteryBtn.classList.remove('active');
+                    
+                    this.showCustomAlert({
+                        icon: '❌',
+                        title: 'خطأ',
+                        content: 'حدث خطأ أثناء تعيين الإتقان',
+                        confirmText: 'حسناً',
+                        showCancel: false
+                    });
+                });
+            },
+            
+            deleteQuestionMastery() {
+                const question = this.quizData[this.currentQuestion];
+                const questionId = question.id;
+                
+                // Show a brief animation on the button to indicate it's working
+                const deleteBtn = document.querySelector('#deleteMasteryBtn');
+                deleteBtn.classList.add('active');
+                
+                // Set Firebase values to reset mastery (attempts: 0, correct: 0)
+                db.collection('questions').doc(questionId).update({
+                    'stats.attempts': 0,
+                    'stats.correct': 0
+                }).then(() => {
+                    // Update local data
+                    question.stats.attempts = 0;
+                    question.stats.correct = 0;
+                    question.masteryPercent = 0;
+                    
+                    // Update UI
+                    const masteryIndicator = document.querySelector('.mastery-indicator');
+                    if (masteryIndicator && !masteryIndicator.classList.contains('marked')) {
+                        masteryIndicator.textContent = `الإتقان: 0%`;
+                    }
+                    
+                    // Show success feedback
+                    this.showCustomAlert({
+                        icon: '✓',
+                        title: 'تم حذف الإتقان',
+                        content: 'تم حذف إتقان هذا السؤال بنجاح',
+                        confirmText: 'حسناً',
+                        showCancel: false
+                    });
+                    
+                    // Remove animation
+                    setTimeout(() => {
+                        deleteBtn.classList.remove('active');
+                    }, 500);
+                }).catch(error => {
+                    console.error('Error deleting mastery status:', error);
+                    deleteBtn.classList.remove('active');
+                    
+                    this.showCustomAlert({
+                        icon: '❌',
+                        title: 'خطأ',
+                        content: 'حدث خطأ أثناء حذف الإتقان',
+                        confirmText: 'حسناً',
+                        showCancel: false
+                    });
+                });
+            },
 
             handleAnswer(index, isCorrect) {
                 const options = document.querySelectorAll('.option');
@@ -2182,7 +2379,7 @@
                         } else {
                             this.showResults();
                         }
-                    }, 800);
+                    }, 500);
                 }
             },
             
@@ -2203,7 +2400,7 @@
                 let percentage = Math.round((answered / total) * 100);
                 
                 if (this.freeRunnerMode) {
-                    percentage = Math.min(100, Math.round((this.currentQuestion + 1) / total * 100));
+                    percentage = Math.min(100, Math.round((answered / (this.currentQuestion + 1)) * 100));
                 }
 
                 document.getElementById('progressBarFill').style.width = `${percentage}%`;
@@ -2284,7 +2481,8 @@
             
             addMoreQuestions() {
                 if (this.allQuestions.length > 0) {
-                    const additionalQuestions = this.allQuestions.splice(0, 5);
+                    // Add more questions without being limited by user-set question count
+                    const additionalQuestions = this.allQuestions.splice(0, 10);
                     
                     this.quizData = [...this.quizData, ...additionalQuestions];
                     
