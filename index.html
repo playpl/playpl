@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html dir="rtl" lang="ar">
 <head>
     <meta charset="UTF-8">
@@ -3559,5 +3560,33 @@
             quizApp.init();
         });
     </script>
+<script>
+// ميزة الاختيار عبر أزرار Numpad
+// 4: الأعلى يسار (0)  5: الأعلى يمين (1)  1: الأسفل يسار (2)  2: الأسفل يمين (3)
+document.addEventListener('keydown', function(e) {
+    // تجاهل إذا كان هناك مدخلات نشطة (input/textarea)
+    if (document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA')) return;
+    // تحقق من الصفحة الحالية
+    const optionsGrid = document.querySelector('.options-grid');
+    if (!optionsGrid) return;
+    const options = optionsGrid.querySelectorAll('.option');
+    if (!options.length) return;
+    // تحقق إذا تم الإجابة بالفعل (جميع الخيارات غير قابلة للنقر)
+    let answered = true;
+    options.forEach(opt => { if (opt.style.pointerEvents !== 'none') answered = false; });
+    if (answered) return;
+    let idx = -1;
+    if (e.code === 'Numpad4') idx = 1; // الأعلى يمين
+    else if (e.code === 'Numpad5') idx = 0; // الأعلى يسار
+    else if (e.code === 'Numpad1') idx = 3; // الأسفل يمين
+    else if (e.code === 'Numpad2') idx = 2; // الأسفل يسار
+    if (idx >= 0 && idx < options.length) {
+        options[idx].click();
+        // تأثير بصري سريع عند الاختيار
+        options[idx].style.boxShadow = '0 0 0 3px var(--primary-color)';
+        setTimeout(() => { options[idx].style.boxShadow = ''; }, 200);
+    }
+});
+</script>
 </body>
 </html>
