@@ -1785,8 +1785,8 @@
                             const correct = question.stats.correct || 0;
                             const incorrect = attempts - correct;
                             
-                            // Base requirement: 7 correct answers for a question with no errors
-                            const baseRequirement = 7;
+                            // Base requirement: 5 correct answers for a question with no errors
+                            const baseRequirement = 5;
                             
                             // Calculate required correct answers based on number of incorrect answers
                             // For each incorrect answer, we add 4 more required correct answers
@@ -2017,8 +2017,8 @@
 
                 if (attempts === 0) return 0;
 
-                // Base requirement: 7 correct answers for a question with no errors
-                const baseRequirement = 7;
+                // Base requirement: 5 correct answers for a question with no errors
+                const baseRequirement = 5;
                 
                 // Calculate required correct answers based on number of incorrect answers
                 // For each incorrect answer, we add 4 more required correct answers
@@ -2243,14 +2243,14 @@
                 const masteryBtn = document.querySelector('#masteryShortcutBtn');
                 masteryBtn.classList.add('active');
                 
-                // Set Firebase values for mastery (incorrect: 0, correct: 7)
+                // Set Firebase values for mastery (incorrect: 0, correct: 5)
                 db.collection('questions').doc(questionId).update({
-                    'stats.attempts': 7,
-                    'stats.correct': 7
+                    'stats.attempts': 5,
+                    'stats.correct': 5
                 }).then(() => {
                     // Update local data
-                    question.stats.attempts = 7;
-                    question.stats.correct = 7;
+                    question.stats.attempts = 5;
+                    question.stats.correct = 5;
                     question.masteryPercent = 100;
                     
                     // Update UI
