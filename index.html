@@ -14,10 +14,7 @@
             --card-bg: #111111;
             --text-color: #FFFFFF;
             --correct: #00C853;
-            --wrong: #D50000; /* Reverted to original intense red for wrong answer feedback */
-            --highlight-word-color: #DC2626; /* Softer red - will be used for hover state now */
-            --highlight-word-base-color: #F87171; /* New brighter/heavier red for base state */
-            --highlight-glow-color: rgba(248, 113, 113, 0.5); /* Glow color based on base color */
+            --wrong: #D50000;
             --unanswered: #F59E0B;
             --marked: #FFD700;
         }
@@ -206,17 +203,26 @@
         }
 
         .highlighted-word {
-            /* Base state: Normal appearance, softer color */
-            color: var(--highlight-word-base-color); /* Heavier/brighter color for base state */
+            color: var(--wrong);
             font-weight: bold;
+            background-color: rgba(213, 0, 0, 0.1);
             padding: 0 2px;
             border-radius: 3px;
             position: relative;
             display: inline-block;
-            /* Define base transition for smooth return TO this state (when leaving hover) */
-            transition: transform 0.4s ease-out, filter 0.4s ease-out, text-shadow 0.4s ease-out, color 0.4s ease-out;
         }
         
+        .highlighted-word:after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background-color: var(--wrong);
+            border-radius: 1px;
+        }
+
         .total-timer {
             text-align: center;
             margin-bottom: 0.5rem;
@@ -598,7 +604,7 @@
         .mastery-shortcut-btn {
             position: absolute;
             top: 1rem;
-            left: calc(1rem + 28px); /* Position next to mark-btn (0.5rem + 28px + 0.5rem spacing) */
+            right: 3.2rem;
             background: none;
             border: none;
             color: var(--correct);
@@ -616,7 +622,7 @@
         .delete-mastery-btn {
             position: absolute;
             top: 1rem;
-            left: calc(1.5rem + 56px); /* Position next to mastery-shortcut-btn (calc(1rem + 28px) + 28px + 0.5rem spacing) */
+            right: 5.4rem;
             background: none;
             border: none;
             color: var(--wrong);
@@ -1430,16 +1436,6 @@
         .chart-total span {
             display: block;
         }
-
-        /* Style for highlighting word in question text when hovering over its option */
-        .option-hover-highlight {
-            color: var(--highlight-word-color); /* Softer color on hover */
-            transform: translateY(-3px) scale(1.1); /* Lift and enlarge */
-            filter: brightness(1.1); /* Add subtle brightness */
-            text-shadow: 0 0 6px var(--highlight-glow-color); /* Add glow on hover */
-            /* Override transition for faster entry INTO this state (when starting hover) */
-            transition: transform 0.2s ease-in, filter 0.2s ease-in, text-shadow 0.2s ease-in, color 0.2s ease-in;
-        }
     </style>
 </head>
 <body>
@@ -2059,12 +2055,7 @@
                 const questionDiv = document.createElement('div');
                 questionDiv.className = 'question-card';
                 
-                // Prepare options for display, potentially shuffling them
-                let displayOptions = question.options.map((option, index) => ({
-                    text: option,
-                    originalIndex: index
-                }));
-                
+                const options = [...question.options];
                 const correctIndex = question.correctIndex;
                 const isMarked = this.markedQuestions.has(this.currentQuestion);
                 const hasAnswered = this.userAnswers[this.currentQuestion] !== -1;
@@ -2073,17 +2064,12 @@
                     question.type === 'خطأ' || 
                     question.question.includes('خطأ:') || 
                     question.question.includes('الخطأ:') ||
-                    question.options.some(opt => opt.includes('*')); // Check original options
+                    options.some(opt => opt.includes('*'));
                     
                 let highlightedQuestion = question.question;
                 
                 if (isErrorTypeQuestion) {
-                    // Highlight any word from the options if it appears in the question text
-                    highlightedQuestion = this.highlightOptionsInQuestion(question.question, question.options); // Use original options for highlighting logic
-                    // DO NOT shuffle displayOptions for error questions
-                } else {
-                    // Shuffle displayOptions for non-error questions
-                    this.shuffleArray(displayOptions);
+                    highlightedQuestion = this.highlightOptionsInQuestion(question.question, options);
                 }
                 
                 const isComprehensionQuestion = 
@@ -2115,62 +2101,23 @@
                     <div class="options-grid"></div>
                 `;
 
-                // Render options using the (potentially shuffled) displayOptions array
-                displayOptions.forEach((optionItem) => {
-                    const optionText = optionItem.text;
-                    const originalOptionIndex = optionItem.originalIndex;
-                    
+                options.forEach((option, index) => {
                     const optionDiv = document.createElement('div');
                     optionDiv.className = 'option';
                     
-                    const cleanOption = optionText.replace('*', '');
+                    const cleanOption = option.replace('*', '');
                     optionDiv.textContent = cleanOption;
                     
                     if (hasAnswered) {
-                        // Check correctness using original index
-                        if (originalOptionIndex === correctIndex) {
+                        if (index === correctIndex) {
                             optionDiv.classList.add('correct');
-                        } else if (originalOptionIndex === this.userAnswers[this.currentQuestion]) {
+                        } else if (index === this.userAnswers[this.currentQuestion]) {
                             optionDiv.classList.add('wrong');
                             optionDiv.innerHTML = this.highlightIncorrectWords(cleanOption);
                         }
                         optionDiv.style.pointerEvents = 'none';
                     } else {
-                        // Pass the original index to handleAnswer
-                        optionDiv.onclick = () => this.handleAnswer(originalOptionIndex, originalOptionIndex === correctIndex);
-                    }
-                    
-                    // Add hover effect for error type questions to link option hover with highlighted words in text
-                    if (isErrorTypeQuestion) {
-                        // Use the text from the current option item
-                        const normalizedOptionText = this.normalizeText(cleanOption); 
-                        
-                        optionDiv.addEventListener('mouseenter', () => {
-                            const questionTextElement = questionDiv.querySelector('h2');
-                            if (!questionTextElement) return;
-                            
-                            const spans = questionTextElement.querySelectorAll('span.highlighted-word');
-                            spans.forEach(span => {
-                                const normalizedSpanText = this.normalizeText(span.textContent);
-                                if (normalizedSpanText === normalizedOptionText) {
-                                    span.classList.add('option-hover-highlight');
-                                }
-                            });
-                        });
-                        
-                        optionDiv.addEventListener('mouseleave', () => {
-                            const questionTextElement = questionDiv.querySelector('h2');
-                            if (!questionTextElement) return;
-                            
-                            const spans = questionTextElement.querySelectorAll('span.highlighted-word.option-hover-highlight');
-                            spans.forEach(span => {
-                                const normalizedSpanText = this.normalizeText(span.textContent);
-                                // Only remove highlight if it matches the option we are leaving
-                                if (normalizedSpanText === normalizedOptionText) {
-                                    span.classList.remove('option-hover-highlight');
-                                }
-                            });
-                        });
+                        optionDiv.onclick = () => this.handleAnswer(index, index === correctIndex);
                     }
                     
                     questionDiv.querySelector('.options-grid').appendChild(optionDiv);
@@ -2207,37 +2154,33 @@
             highlightOptionsInQuestion(questionText, options) {
                 let highlightedText = questionText;
                 
-                // Clean options and sort by length (longer first) to avoid partial matches
                 const cleanOptions = options.map(opt => opt.replace('*', '').trim());
+                
                 cleanOptions.sort((a, b) => b.length - a.length);
                 
-                // Define common Arabic words to potentially ignore (optional, can be adjusted)
-                // const commonWords = ['من', 'في', 'إلى', 'على', 'عن', 'مع', 'هو', 'هي', 'كان', 'و', 'أو'];
+                const commonWords = [
+                    'من', 'في', 'إلى', 'على', 'عن', 'مع', 'هذا', 'هذه', 'ذلك', 'تلك',
+                    'الذي', 'التي', 'الذين', 'اللاتي', 'أن', 'لا', 'لم', 'لن', 'كان',
+                    'كانت', 'يكون', 'تكون', 'هو', 'هي', 'هم', 'هن', 'نحن', 'أنا',
+                    'أنت', 'أنتم', 'أنتن', 'هناك', 'هنا', 'حتى', 'إذا', 'إن', 'ثم',
+                    'لكن', 'لأن', 'بأن', 'كل', 'بعض', 'غير', 'عند', 'عندما', 'أو',
+                    'بين', 'قد', 'و', 'ف', 'ب', 'ل', 'ك', 'قبل', 'بعد', 'فوق', 'تحت'
+                ];
                 
                 for (const option of cleanOptions) {
-                    if (option && option.length > 1) { // Only highlight words longer than 1 char
-                        // Escape the option text for use in regex
-                        const escapedOption = this.escapeRegExp(option);
+                    if (option && option.length > 1) {
+                        if (option.length <= 2) continue;
                         
-                        // Create regex - Removed \b word boundaries as they can be unreliable with Arabic
-                        // This will match the option word even if it's part of a larger word, 
-                        // which might be desired or not depending on context.
-                        // If exact word matching is needed and \b fails, lookarounds might be required: `(?<!\S)${escapedOption}(?!\S)`
-                        const regex = new RegExp(`(${escapedOption})`, 'g'); 
+                        const optionWords = option.split(/\s+/);
                         
-                        try {
-                            highlightedText = highlightedText.replace(regex, (match) => {
-                                // Avoid highlighting inside existing HTML tags (simple check)
-                                // A more robust solution would involve DOM parsing if needed.
-                                if (highlightedText.substring(highlightedText.indexOf(match) - 1, highlightedText.indexOf(match)) === '>' || 
-                                    highlightedText.substring(highlightedText.indexOf(match) + match.length, highlightedText.indexOf(match) + match.length + 1) === '<') {
-                                    return match; // Don't highlight inside tags
-                                }
-                                return `<span class="highlighted-word">${match}</span>`;
-                            });
-                        } catch (e) {
-                            console.error("Regex error in highlightOptionsInQuestion:", e);
-                            // Continue with the next option if regex fails
+                        for (const word of optionWords) {
+                            if (word.length >= 3 && !commonWords.includes(word)) {
+                                const regex = new RegExp(`\\b${this.escapeRegExp(word)}\\b`, 'g');
+                                
+                                highlightedText = highlightedText.replace(regex, match => 
+                                    `<span class="highlighted-word">${match}</span>`
+                                );
+                            }
                         }
                     }
                 }
@@ -2868,52 +2811,47 @@
                 // Count how many sliders actually exist
                 let sliderCount = 0;
                 let totalValue = 0;
-                const existingTypes = []; // Track which types actually exist
                 
                 // Only add values from sliders that exist in the DOM
                 if (errorSlider) {
                     percentages.error = parseInt(errorSlider.value) || 0;
                     totalValue += percentages.error;
                     sliderCount++;
-                    existingTypes.push('error');
                 }
                 
                 if (comprehensionSlider) {
                     percentages.comprehension = parseInt(comprehensionSlider.value) || 0;
                     totalValue += percentages.comprehension;
                     sliderCount++;
-                    existingTypes.push('comprehension');
                 }
                 
                 if (analogySlider) {
                     percentages.analogy = parseInt(analogySlider.value) || 0;
                     totalValue += percentages.analogy;
                     sliderCount++;
-                    existingTypes.push('analogy');
                 }
                 
                 if (completionSlider) {
                     percentages.completion = parseInt(completionSlider.value) || 0;
                     totalValue += percentages.completion;
                     sliderCount++;
-                    existingTypes.push('completion');
                 }
                 
                 if (vocabularySlider) {
                     percentages.vocabulary = parseInt(vocabularySlider.value) || 0;
                     totalValue += percentages.vocabulary;
                     sliderCount++;
-                    existingTypes.push('vocabulary');
                 }
                 
                 // If no sliders exist or total is 0, distribute evenly among existing types
-                if (sliderCount > 0 && totalValue === 0) {
+                if (sliderCount === 0 || totalValue === 0) {
                     const evenShare = Math.floor(100 / sliderCount);
-                    let remainder = 100 % sliderCount;
                     
-                    existingTypes.forEach((type, index) => {
-                        percentages[type] = evenShare + (index < remainder ? 1 : 0);
-                    });
+                    if (errorSlider) percentages.error = evenShare;
+                    if (comprehensionSlider) percentages.comprehension = evenShare;
+                    if (analogySlider) percentages.analogy = evenShare;
+                    if (completionSlider) percentages.completion = evenShare;
+                    if (vocabularySlider) percentages.vocabulary = evenShare;
                 }
                 
                 return percentages;
@@ -3053,7 +2991,6 @@
                 if (!this.undoInitialized) {
                     this.deletedSliders = [];
                     this.initialSliderTypes = [];
-                    this.lockedSliders = new Set(); // Initialize locked sliders set here
                     this.undoInitialized = true;
                     
                     // Store initial slider types
@@ -3069,154 +3006,211 @@
                     undoDeleteBtn.addEventListener('click', () => this.handleUndoDeletion());
                 }
                 
+                // We'll use this object to track locked sliders
+                const lockedSliders = new Set();
+                
                 // We'll use this function to synchronize all sliders in real-time
-                // Defined here or make it a method of quizApp if needed elsewhere directly
-                this.synchronizeSliders = (changedSliderId, newValue) => {
+                const synchronizeSliders = (changedSliderId, newValue) => {
+                    // Get all active sliders
                     const activeSliders = Array.from(document.querySelectorAll('.slider-input'))
-                        .filter(slider => !this.lockedSliders.has(slider.id)); 
+                        .filter(slider => !lockedSliders.has(slider.id)); // Skip locked sliders
                     
-                    if (activeSliders.length <= 1) return; 
+                    if (activeSliders.length <= 1) return; // Nothing to synchronize if only one slider
                     
+                    // Get the current total without the changed slider
                     let total = 0;
                     const otherSliders = [];
                     
                     activeSliders.forEach(slider => {
-                        const currentValue = parseInt(slider.id === changedSliderId ? newValue : slider.value) || 0;
-                        total += currentValue;
-                        if (slider.id !== changedSliderId) {
-                            otherSliders.push({ slider: slider, value: parseInt(slider.value) || 0 });
+                        if (slider.id === changedSliderId) {
+                            total += parseInt(newValue) || 0;
+                        } else {
+                            const currentValue = parseInt(slider.value) || 0;
+                            total += currentValue;
+                            otherSliders.push({
+                                slider: slider,
+                                value: currentValue
+                            });
                         }
                     });
                     
+                    // If total is not 100, adjust other sliders proportionally
                     if (total !== 100 && otherSliders.length > 0) {
+                        // How much we need to adjust
                         const excess = total - 100;
+                        
+                        // Calculate original sum of other sliders
                         const otherSlidersSum = otherSliders.reduce((sum, item) => sum + item.value, 0);
-                        let remainingExcess = excess; // Track remaining adjustment needed
-
+                        
                         if (otherSlidersSum === 0) {
-                           // Distribute evenly if sum is 0
+                            // If other sliders sum to 0, distribute evenly
                             const valuePerSlider = Math.floor(Math.abs(excess) / otherSliders.length);
-                            const remainder = Math.abs(excess) % otherSliders.length;
-                            otherSliders.forEach((item, index) => {
-                                let adjustment = valuePerSlider + (index < remainder ? 1 : 0);
-                                item.slider.value = excess > 0 ? 0 : adjustment; // Can't go below 0
-
+                            otherSliders.forEach(item => {
+                                item.slider.value = excess > 0 ? 
+                                    Math.max(0, item.value - Math.ceil(excess / otherSliders.length)) : 
+                                    item.value + valuePerSlider;
+                                    
+                                // Update value display
                                 const valueId = item.slider.id.replace('Slider', 'Value');
                                 const valueDisplay = document.getElementById(valueId);
-                                if (valueDisplay) valueDisplay.textContent = `${item.slider.value}%`;
+                                if (valueDisplay) {
+                                    valueDisplay.textContent = `${item.slider.value}%`;
+                                }
                             });
                         } else {
-                             // Distribute proportionally
-                            otherSliders.forEach((item, index) => {
+                            // Distribute proportionally based on current values
+                            otherSliders.forEach(item => {
+                                // Calculate proportion of this slider relative to total of other sliders
                                 const proportion = item.value / otherSlidersSum;
-                                let adjustment;
-                                if (index === otherSliders.length - 1) {
-                                     // Assign remaining excess to the last slider to ensure sum is exactly 100
-                                     adjustment = remainingExcess;
-                                } else {
-                                     adjustment = Math.round(excess * proportion);
-                                     remainingExcess -= adjustment;
-                                }
-
+                                
+                                // Calculate adjustment amount
+                                const adjustment = Math.round(excess * proportion);
+                                
+                                // Apply adjustment (subtract if excess is positive, add if negative)
                                 const newSliderValue = Math.max(0, Math.min(100, item.value - adjustment));
                                 item.slider.value = newSliderValue;
                                 
+                                // Update value display
                                 const valueId = item.slider.id.replace('Slider', 'Value');
                                 const valueDisplay = document.getElementById(valueId);
-                                if (valueDisplay) valueDisplay.textContent = `${newSliderValue}%`;
+                                if (valueDisplay) {
+                                    valueDisplay.textContent = `${newSliderValue}%`;
+                                }
                             });
                         }
-                         // Final check to ensure total is exactly 100
-                         let finalTotalCheck = 0;
-                         document.querySelectorAll('.slider-input').forEach(s => {
-                              finalTotalCheck += parseInt(s.value) || 0;
-                         });
-                         if(finalTotalCheck !== 100 && activeSliders.length > 0 && !this.lockedSliders.size){
-                             // Minor adjustment to the first unlocked slider if needed
-                             const firstUnlocked = activeSliders[0];
-                             const diff = 100 - finalTotalCheck;
-                             const currentVal = parseInt(firstUnlocked.value) || 0;
-                             firstUnlocked.value = Math.max(0, Math.min(100, currentVal + diff));
-                             const valId = firstUnlocked.id.replace('Slider', 'Value');
-                             const valDisp = document.getElementById(valId);
-                             if (valDisp) valDisp.textContent = `${firstUnlocked.value}%`;
-                         }
                     }
                     
+                    // Update the chart
                     this.updateQuestionTypesChartRealtime();
                 };
                 
                 // Setup lock buttons
                 document.querySelectorAll('.lock-type-btn').forEach(btn => {
-                    // Remove previous listener to prevent duplicates if setup runs again
-                    const newBtn = btn.cloneNode(true);
-                    btn.parentNode.replaceChild(newBtn, btn);
-
-                    newBtn.addEventListener('click', (e) => {
+                    btn.addEventListener('click', (e) => {
                         const typeToLock = e.currentTarget.dataset.type;
                         const sliderId = `${typeToLock}TypeSlider`;
                         const slider = document.getElementById(sliderId);
                         const container = e.currentTarget.closest('.slider-container');
-                        const isLocked = newBtn.classList.toggle('locked');
-
-                        container.classList.toggle('locked', isLocked);
-                        slider.disabled = isLocked;
-                        newBtn.title = isLocked ? "فتح هذا القسم" : "قفل هذا القسم";
-
-                        if (isLocked) {
-                            this.lockedSliders.add(sliderId);
+                        
+                        if (lockedSliders.has(sliderId)) {
+                            // Unlock
+                            lockedSliders.delete(sliderId);
+                            btn.classList.remove('locked');
+                            container.classList.remove('locked');
+                            slider.disabled = false;
+                            
+                            // Update tooltip
+                            btn.title = "قفل هذا القسم";
                         } else {
-                            this.lockedSliders.delete(sliderId);
-                            // When unlocking, re-synchronize sliders
-                            this.synchronizeSliders(null, null); // Pass null to trigger re-sync based on current values
+                            // Lock
+                            lockedSliders.add(sliderId);
+                            btn.classList.add('locked');
+                            container.classList.add('locked');
+                            slider.disabled = true;
+                            
+                            // Update tooltip
+                            btn.title = "فتح هذا القسم";
                         }
                     });
-                    // Sync initial locked state from the set
-                    const type = newBtn.dataset.type;
-                    const sliderId = `${type}TypeSlider`;
-                     if(this.lockedSliders.has(sliderId)){
-                        newBtn.classList.add('locked');
-                        document.getElementById(sliderId).disabled = true;
-                        newBtn.closest('.slider-container').classList.add('locked');
-                        newBtn.title = "فتح هذا القسم";
-                     }
-
                 });
                 
                 // Setup delete buttons
                 document.querySelectorAll('.delete-type-btn').forEach(btn => {
-                    // Remove previous listener
-                    const newBtn = btn.cloneNode(true);
-                    btn.parentNode.replaceChild(newBtn, btn);
-                    newBtn.addEventListener('click', (e) => this.handleSliderDelete(e));
+                    btn.addEventListener('click', (e) => {
+                        const typeToDelete = e.currentTarget.dataset.type;
+                        const containerToDelete = e.currentTarget.closest('.slider-container');
+                        
+                        // Check if we have more than one container before deleting
+                        const remainingContainers = document.querySelectorAll('.slider-container').length;
+                        if (remainingContainers <= 1) {
+                            // Use custom alert instead of browser alert
+                            this.showCustomAlert({
+                                icon: '❓',
+                                title: 'تنبيه',
+                                content: 'تسوق امها؟',
+                                showCancel: false,
+                                confirmText: 'طيب'
+                            });
+                            
+                            // Add shake animation
+                            containerToDelete.classList.add('deleting');
+                            setTimeout(() => {
+                                containerToDelete.classList.remove('deleting');
+                            }, 500);
+                            return;
+                        }
+                        
+                        const sliderId = `${typeToDelete}TypeSlider`;
+                        const sliderInput = document.getElementById(sliderId);
+                        
+                        if (sliderInput) {
+                            // Store deleted slider info for undo
+                            const deletedSlider = {
+                                id: sliderId,
+                                container: containerToDelete.cloneNode(true),
+                                value: sliderInput.value,
+                                name: containerToDelete.querySelector('.slider-label').textContent.trim()
+                            };
+                            
+                            // Add to deletedSliders array
+                            this.deletedSliders.push(deletedSlider);
+                            
+                            // Remove from locked set if it was locked
+                            if (lockedSliders.has(sliderId)) {
+                                lockedSliders.delete(sliderId);
+                            }
+                            
+                            // Synchronize other sliders before removing this one
+                            synchronizeSliders(sliderId, 0);
+                            
+                            // Set the value to 0 before removing
+                            sliderInput.value = 0;
+                            
+                            const valueId = `${typeToDelete}TypeValue`;
+                            const valueDisplay = document.getElementById(valueId);
+                            if (valueDisplay) {
+                                valueDisplay.textContent = '0%';
+                            }
+                            
+                            // Apply exit animations
+                            containerToDelete.classList.add('animate__fadeOutLeft', 'animate__zoomOut');
+                            
+                            // Show undo button immediately
+                            const undoDeleteBtn = document.getElementById('undoDeleteBtn');
+                            undoDeleteBtn.classList.add('active');
+                            
+                            setTimeout(() => {
+                                containerToDelete.remove();
+                                // Update the chart after removal
+                                this.updateQuestionTypesChartRealtime();
+                            }, 500);
+                        }
+                    });
                 });
                 
                 // Setup slider input events
                 document.querySelectorAll('.slider-input').forEach(slider => {
-                     // Remove previous listener
-                    const newSlider = slider.cloneNode(true);
-                    slider.parentNode.replaceChild(newSlider, slider);
-
-                    const valueId = newSlider.id.replace('Slider', 'Value');
+                    const valueId = slider.id.replace('Slider', 'Value');
                     const valueDisplay = document.getElementById(valueId);
                     
                     if (!valueDisplay) return;
                     
+                    // Fix for slider value width to prevent element movement
                     valueDisplay.style.minWidth = '40px';
                     valueDisplay.style.textAlign = 'center';
                     
-                    newSlider.addEventListener('input', (e) => {
-                        if (this.lockedSliders.has(newSlider.id)) return;
+                    slider.addEventListener('input', (e) => {
+                        // Skip if slider is locked
+                        if (lockedSliders.has(slider.id)) return;
                         
+                        // Update the value display
                         const newValue = e.target.value;
                         valueDisplay.textContent = `${newValue}%`;
                         
-                        this.synchronizeSliders(newSlider.id, newValue);
+                        // Synchronize all other sliders in real-time
+                        synchronizeSliders(slider.id, newValue);
                     });
                 });
-                // Initial sync and chart update after setup
-                this.synchronizeSliders(null, null);
-                this.updateQuestionTypesChart();
             },
 
             // Separate method to handle undo deletion
@@ -3230,11 +3224,10 @@
                     const sliderId = lastDeleted.id;
                     const typeValue = lastDeleted.value;
                     const typeName = lastDeleted.name;
-                    const type = sliderId.replace('TypeSlider', '');
                     
                     // Create new slider container
                     const sliderContainer = document.createElement('div');
-                    sliderContainer.className = `slider-container ${type}-type`; // Re-add type class
+                    sliderContainer.className = `slider-container ${sliderId.replace('TypeSlider', '-type')}`;
                     sliderContainer.innerHTML = `
                         <div class="slider-header">
                             <span class="slider-label">
@@ -3242,13 +3235,13 @@
                                 ${typeName}
                             </span>
                             <div class="slider-controls">
-                                <span class="slider-value" id="${type}TypeValue">${typeValue}%</span>
-                                <button class="lock-type-btn" title="قفل هذا القسم" data-type="${type}">
+                                <span class="slider-value" id="${sliderId.replace('Slider', 'Value')}">${typeValue}%</span>
+                                <button class="lock-type-btn" title="قفل هذا القسم" data-type="${sliderId.replace('TypeSlider', '')}">
                                     <svg viewBox="0 0 24 24">
                                         <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/>
                                     </svg>
                                 </button>
-                                <button class="delete-type-btn" title="حذف هذا القسم" data-type="${type}">
+                                <button class="delete-type-btn" title="حذف هذا القسم" data-type="${sliderId.replace('TypeSlider', '')}">
                                     <svg viewBox="0 0 24 24">
                                         <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
                                     </svg>
@@ -3262,109 +3255,35 @@
                     const slidersList = document.querySelector('.question-type-sliders');
                     slidersList.appendChild(sliderContainer);
                     
-                    // --- Attach listeners specifically to the new elements ---
-                    const newSliderInput = sliderContainer.querySelector('.slider-input');
-                    const newValueDisplay = sliderContainer.querySelector('.slider-value');
-                    const newLockBtn = sliderContainer.querySelector('.lock-type-btn');
-                    const newDeleteBtn = sliderContainer.querySelector('.delete-type-btn');
-
-                    // Fix value display style
-                    newValueDisplay.style.minWidth = '40px';
-                    newValueDisplay.style.textAlign = 'center';
-
-                    // Re-attach slider input listener
-                    newSliderInput.addEventListener('input', (e) => {
-                        if (newLockBtn.classList.contains('locked')) return; // Check if locked
-                        newValueDisplay.textContent = `${e.target.value}%`;
-                        // Need access to the synchronize function - assuming setupTypeSliders defines it in a way it can be called
-                        // Or we need to pass 'this' or the function reference
-                        this.synchronizeSliders(newSliderInput.id, e.target.value); 
-                    });
-
-                    // Re-attach lock button listener
-                    newLockBtn.addEventListener('click', (e) => {
-                        const container = e.currentTarget.closest('.slider-container');
-                        const isLocked = newLockBtn.classList.toggle('locked');
-                        container.classList.toggle('locked', isLocked);
-                        newSliderInput.disabled = isLocked;
-                        newLockBtn.title = isLocked ? "فتح هذا القسم" : "قفل هذا القسم";
-                        if (isLocked) {
-                             this.lockedSliders.add(newSliderInput.id);
-                        } else {
-                             this.lockedSliders.delete(newSliderInput.id);
-                        }
-                    });
-
-                    // Re-attach delete button listener
-                    newDeleteBtn.addEventListener('click', (e) => {
-                        // Reuse the logic from setupTypeSliders for deleting
-                        this.handleSliderDelete(e); // Assuming we extract delete logic into a helper
-                    });
-                    // --- End of specific listener attachment ---
+                    // Re-attach event listeners
+                    this.setupTypeSliders();
                     
                     // Update chart
                     this.updateQuestionTypesChartRealtime();
                     
                     // Keep undo button visible as long as there are deleted sliders
                     if (this.deletedSliders.length === 0) {
-                        // Check if all types are restored (optional check, can be simplified)
-                        const currentTypes = Array.from(document.querySelectorAll('.slider-container'))
-                            .map(c => c.querySelector('.delete-type-btn')?.dataset.type)
-                            .filter(Boolean);
-                        const allRestored = this.initialSliderTypes.every(type => currentTypes.includes(type));
+                        // Check if all types are restored
+                        const currentTypes = [];
+                        document.querySelectorAll('.slider-container').forEach(container => {
+                            const typeClass = Array.from(container.classList).find(cls => cls.endsWith('-type'))?.replace('-type', '');
+                            if (typeClass) {
+                                currentTypes.push(typeClass);
+                            }
+                        });
+                        
+                        let allRestored = true;
+                        for (const type of this.initialSliderTypes) {
+                            if (!currentTypes.includes(type)) {
+                                allRestored = false;
+                                break;
+                            }
+                        }
                         
                         if (allRestored) {
                             undoDeleteBtn.classList.remove('active');
                         }
                     }
-                }
-            },
-
-            // Helper function to consolidate delete logic (called from setup and undo)
-            handleSliderDelete(event) {
-                const typeToDelete = event.currentTarget.dataset.type;
-                const containerToDelete = event.currentTarget.closest('.slider-container');
-                
-                const remainingContainers = document.querySelectorAll('.slider-container').length;
-                if (remainingContainers <= 1) {
-                    this.showCustomAlert({
-                        icon: '❓', title: 'تنبيه', content: 'تسوق امها؟', showCancel: false, confirmText: 'طيب'
-                    });
-                    containerToDelete.classList.add('deleting');
-                    setTimeout(() => { containerToDelete.classList.remove('deleting'); }, 500);
-                    return;
-                }
-                
-                const sliderId = `${typeToDelete}TypeSlider`;
-                const sliderInput = document.getElementById(sliderId);
-                
-                if (sliderInput) {
-                    const deletedSlider = {
-                        id: sliderId,
-                        container: containerToDelete.cloneNode(true),
-                        value: sliderInput.value,
-                        name: containerToDelete.querySelector('.slider-label').textContent.trim()
-                    };
-                    this.deletedSliders.push(deletedSlider);
-                    
-                    if (this.lockedSliders.has(sliderId)) {
-                         this.lockedSliders.delete(sliderId);
-                    }
-                    
-                    this.synchronizeSliders(sliderId, 0); 
-                    
-                    sliderInput.value = 0;
-                    const valueId = `${typeToDelete}TypeValue`;
-                    const valueDisplay = document.getElementById(valueId);
-                    if (valueDisplay) valueDisplay.textContent = '0%';
-                    
-                    containerToDelete.classList.add('animate__fadeOutLeft', 'animate__zoomOut');
-                    document.getElementById('undoDeleteBtn').classList.add('active');
-                    
-                    setTimeout(() => {
-                        containerToDelete.remove();
-                        this.updateQuestionTypesChartRealtime();
-                    }, 500);
                 }
             },
 
@@ -3569,7 +3488,7 @@
                                 }
                             }
                         },
-                        onClick: function(event, elements) { // Removed .bind(this.typesChart)
+                        onClick: function(event, elements) {
                             const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
                             if (isMobile && elements && elements.length > 0) {
                                 const index = elements[0].index;
@@ -3597,7 +3516,7 @@
                                     mobileTooltip.classList.remove('active');
                                 }, 2000);
                             }
-                        } //.bind(this.typesChart) // Removed binding here
+                        }.bind(this.typesChart)
                     }
                 });
                 
@@ -3634,92 +3553,6 @@
                         y: chartCenterY + normalizedY * (radius + padding)
                     };
                 };
-            },
-            
-            // Helper function to normalize Alef variations
-            normalizeAlef(text) {
-                if (typeof text !== 'string') return text;
-                return text.replace(/[أإآ]/g, 'ا');
-            },
-            
-            // Helper function to remove Arabic diacritics AND normalize Alef
-            normalizeText(text) {
-                if (typeof text !== 'string') return text;
-                let normalized = text.replace(/[\u064B-\u065F]/g, ''); // Remove diacritics
-                normalized = normalized.replace(/[أإآ]/g, 'ا');       // Normalize Alef
-                return normalized;
-            },
-            
-            // Highlights words from the options list within the question text
-            highlightOptionsInQuestion(questionText, options) {
-                let highlightedText = questionText;
-                // Use the combined normalization function for matching
-                const normalizedQuestionText = this.normalizeText(questionText);
- 
-                // Clean options and sort by length (longer first) to avoid partial matches
-                const cleanOptions = options.map(opt => opt.replace('*', '').trim());
-                cleanOptions.sort((a, b) => b.length - a.length);
-                
-                for (const option of cleanOptions) {
-                    if (option && option.length > 0) { // Allow single letter options if needed now
-                        // Use the combined normalization function
-                        const normalizedOption = this.normalizeText(option);
-                        if (!normalizedOption) continue; // Skip if option becomes empty after removing diacritics
-                        
-                        // Escape the option text for use in regex
-                        const escapedOption = this.escapeRegExp(normalizedOption);
-                        
-                        // Create regex - Removed \b word boundaries as they can be unreliable with Arabic
-                        // This will match the option word even if it's part of a larger word, 
-                        // which might be desired or not depending on context.
-                        // If exact word matching is needed and \b fails, lookarounds might be required: `(?<!\S)${escapedOption}(?!\S)`
-                        const regex = new RegExp(`(${escapedOption})`, 'gi'); // Added 'i' for case-insensitivity (though less relevant for Arabic)
-                        
-                        try {
-                            // Match using normalized text, but replace in the original highlightedText
-                            // This part needs careful implementation to handle multiple occurrences correctly.
-                            // A simple replace might highlight the wrong instance if the normalized word appears multiple times.
-                            // Let's try a more robust approach mapping matches.
-
-                            let lastIndex = 0;
-                            let resultText = '';
-                            const originalTextForMatching = this.normalizeText(highlightedText); // Normalize current state of highlightedText
-
-                            originalTextForMatching.replace(regex, (match, group1, offset) => {
-                                // Find the corresponding segment in the *original* highlightedText
-                                // This mapping assumes the structure (non-tag chars) remains similar between normalized and original.
-                                const originalSegmentStart = offset; // Simplified mapping for now
-                                const originalSegmentEnd = offset + match.length;
-
-                                // Basic check if match boundaries are within an existing tag
-                                const isInsideTag = highlightedText.substring(0, originalSegmentStart).includes('<') && 
-                                                  !highlightedText.substring(0, originalSegmentStart).includes('>') || 
-                                                  highlightedText.substring(originalSegmentEnd).includes('>') && 
-                                                  !highlightedText.substring(originalSegmentEnd).includes('<');
-
-                                resultText += highlightedText.substring(lastIndex, originalSegmentStart);
-                                
-                                if (isInsideTag || highlightedText.substring(originalSegmentStart, originalSegmentEnd).includes('<span')) {
-                                    // Append segment without modification if it's inside a tag or already highlighted
-                                    resultText += highlightedText.substring(originalSegmentStart, originalSegmentEnd);
-                                } else {
-                                    // Append the highlighted match from the original text
-                                    resultText += `<span class="highlighted-word">${highlightedText.substring(originalSegmentStart, originalSegmentEnd)}</span>`;
-                                }
-                                lastIndex = originalSegmentEnd;
-                            });
-                            // Append any remaining text after the last match
-                            resultText += highlightedText.substring(lastIndex);
-                            highlightedText = resultText;
-
-                        } catch (e) {
-                            console.error("Regex error in highlightOptionsInQuestion:", e);
-                            // Continue with the next option if regex fails
-                        }
-                    }
-                }
-                
-                return highlightedText;
             }
         };
 
