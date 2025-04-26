@@ -93,6 +93,16 @@
             border-radius: 5px;
         }
 
+        .input-suffix {
+            color: var(--text-color);
+            margin-right: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        #maxMasteryLimit {
+            width: 60px;
+        }
+
         .time-per-question {
             background: var(--card-bg);
             padding: 1rem;
@@ -1157,7 +1167,7 @@
         
         .chart-container {
             width: 100%;
-            height: 320px;
+            height: 280px;
             position: relative;
             transition: all 0.3s ease;
             margin: 1rem auto 2rem;
@@ -1169,13 +1179,33 @@
             align-items: center;
         }
         
+        .mastery-distribution-container {
+            background: var(--card-bg);
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .mastery-distribution-container h3 {
+            text-align: center;
+            margin-bottom: 1rem;
+            color: var(--text-color);
+            font-size: 1.2rem;
+        }
+
+        .mastery-distribution-container .chart-container {
+            height: 250px;
+            margin: 0;
+        }
+        
         .chart-container canvas {
             position: relative;
             z-index: 2;
         }
         
         .chart-container:hover {
-            transform: scale(1.05);
+            transform: scale(1.02);
             z-index: 5;
         }
         
@@ -1184,7 +1214,7 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            font-size: 1.3rem;
+            font-size: 1.1rem;
             font-weight: bold;
             color: white;
             text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
@@ -1192,6 +1222,13 @@
             width: 100%;
             text-align: center;
             pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+        
+        .chart-total span {
+            display: block;
         }
         
         .types-legend {
@@ -1390,52 +1427,6 @@
             opacity: 1;
             transform: translateY(0);
         }
-        
-        .chart-container {
-            width: 100%;
-            height: 280px;
-            position: relative;
-            transition: all 0.3s ease;
-            margin: 1rem auto 2rem;
-            z-index: 1;
-            overflow: visible;
-            max-width: 100%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-        
-        .chart-container canvas {
-            position: relative;
-            z-index: 2;
-        }
-        
-        .chart-container:hover {
-            transform: scale(1.02);
-            z-index: 5;
-        }
-        
-        .chart-total {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 1.1rem;
-            font-weight: bold;
-            color: white;
-            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
-            z-index: 3;
-            width: 100%;
-            text-align: center;
-            pointer-events: none;
-            display: flex;
-            flex-direction: column;
-            gap: 0.25rem;
-        }
-        
-        .chart-total span {
-            display: block;
-        }
     </style>
 </head>
 <body>
@@ -1444,6 +1435,12 @@
             <h2>اختبار القدرات - القسم اللفظي</h2>
             
             <div class="options-selector">
+                <div class="mastery-distribution-container">
+                    <h3>توزيع نسب الإتقان</h3>
+                    <div class="chart-container">
+                        <canvas id="masteryDistributionChart"></canvas>
+                    </div>
+                </div>
                 <div class="chart-container">
                     <canvas id="questionTypesChart"></canvas>
                     <div class="chart-total">
@@ -1579,6 +1576,12 @@
                     <input type="number" id="testDuration" min="1" max="1000" value="9">
                 </div>
                 
+                <div class="question-count">
+                    <label for="maxMasteryLimit">نسبة الإتقان لا تزيد عن:</label>
+                    <input type="number" id="maxMasteryLimit" min="0" max="100" value="100">
+                    <span class="input-suffix">%</span>
+                </div>
+
                 <div class="time-per-question" id="timePerQuestion">
                     الوقت المخصص لكل سؤال: 1:30 دقيقة
                 </div>
@@ -1747,9 +1750,145 @@
                 this.addEventListeners();
                 this.updateMarkedCount();
                 this.updateTimePerQuestion();
-                this.updateMasteryRequirements(); // This is now async
+                this.updateMasteryRequirements();
                 this.initQuestionTypesChart();
+                this.initMasteryDistributionChart();
                 this.setupTypeSliders();
+            },
+            
+            async initMasteryDistributionChart() {
+                try {
+                    // Fetch all questions from Firebase
+                    const snapshot = await db.collection('questions').get();
+                    const masteryGroups = {};
+
+                    // Initialize all possible percentages from 0 to 100
+                    for (let i = 0; i <= 100; i++) {
+                        masteryGroups[i] = 0;
+                    }
+
+                    // Process each question
+                    snapshot.forEach(doc => {
+                        const question = doc.data();
+                        const masteryPercent = Math.round(this.calculateMastery(question.stats));
+                        masteryGroups[masteryPercent]++;
+                    });
+
+                    const ctx = document.getElementById('masteryDistributionChart').getContext('2d');
+                    
+                    if (this.masteryChart) {
+                        this.masteryChart.destroy();
+                    }
+
+                    // Create arrays for labels and data
+                    const labels = Object.keys(masteryGroups);
+                    const data = Object.values(masteryGroups);
+
+                    // Find max value for setting appropriate step size
+                    const maxValue = Math.max(...data);
+                    const stepSize = this.calculateStepSize(maxValue);
+
+                    // Create color gradient from red to green
+                    const colors = labels.map(percent => {
+                        const hue = (percent * 1.2); // multiply by 1.2 to get to green (120)
+                        return `hsl(${hue}, 80%, 50%)`;
+                    });
+
+                    this.masteryChart = new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: labels.map(l => l + '%'),
+                            datasets: [{
+                                label: 'عدد الأسئلة',
+                                data: data,
+                                backgroundColor: colors,
+                                borderWidth: 0,
+                                borderRadius: 5,
+                                barPercentage: 1,
+                                categoryPercentage: 1
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    display: false
+                                },
+                                tooltip: {
+                                    callbacks: {
+                                        title: function(context) {
+                                            return `نسبة الإتقان: ${context[0].label}`;
+                                        },
+                                        label: function(context) {
+                                            const count = context.raw;
+                                            return `عدد الأسئلة: ${count}`;
+                                        }
+                                    }
+                                }
+                            },
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    ticks: {
+                                        stepSize: stepSize,
+                                        color: 'white',
+                                        callback: function(value) {
+                                            if (value % stepSize === 0) {
+                                                return value;
+                                            }
+                                        }
+                                    },
+                                    grid: {
+                                        color: 'rgba(255, 255, 255, 0.1)'
+                                    },
+                                    title: {
+                                        display: true,
+                                        text: 'عدد الأسئلة',
+                                        color: 'white'
+                                    },
+                                    suggestedMax: maxValue + (stepSize - (maxValue % stepSize))
+                                },
+                                x: {
+                                    ticks: {
+                                        color: 'white',
+                                        autoSkip: true,
+                                        maxRotation: 0,
+                                        minRotation: 0,
+                                        callback: function(value, index) {
+                                            // Show only every 10th label for better readability
+                                            return index % 10 === 0 ? this.getLabelForValue(value) : '';
+                                        }
+                                    },
+                                    grid: {
+                                        display: false
+                                    },
+                                    title: {
+                                        display: true,
+                                        text: 'نسبة الإتقان',
+                                        color: 'white'
+                                    }
+                                }
+                            }
+                        }
+                    });
+                } catch (error) {
+                    console.error('Error initializing mastery distribution chart:', error);
+                }
+            },
+
+            calculateStepSize(maxValue) {
+                if (maxValue <= 10) return 1;
+                if (maxValue <= 50) return 5;
+                if (maxValue <= 100) return 10;
+                if (maxValue <= 500) return 50;
+                if (maxValue <= 1000) return 100;
+                return Math.ceil(maxValue / 10);
+            },
+
+            // Update the mastery distribution chart when needed
+            async updateMasteryDistributionChart() {
+                await this.initMasteryDistributionChart();
             },
             
             updateTimePerQuestion() {
@@ -1833,6 +1972,12 @@
                 document.getElementById('restartQuizBtn').addEventListener('click', () => this.restartQuiz());
                 document.getElementById('copyAllMarkedBtn').addEventListener('click', () => this.copyAllMarked());
                 
+                document.getElementById('maxMasteryLimit').addEventListener('input', (e) => {
+                    let value = parseInt(e.target.value) || 0;
+                    value = Math.min(Math.max(0, value), 100);
+                    e.target.value = value;
+                });
+                
                 // Add refresh button for mastery requirements
                 document.getElementById('masteryInfoContainer').addEventListener('click', () => {
                     // Visual feedback that we're refreshing
@@ -1884,12 +2029,20 @@
                 this.markedOnly = document.getElementById('markedOnly').checked;
                 this.autoAdvance = document.getElementById('autoAdvance').checked;
                 this.freeRunnerMode = document.getElementById('freeRunnerMode').checked;
+                this.maxMasteryLimit = parseInt(document.getElementById('maxMasteryLimit').value) || 100;
                 
                 try {
                     await this.fetchQuestions();
                     
                     if (this.quizData.length === 0) {
-                        return alert('لم يتم العثور على أسئلة مناسبة. يرجى تعديل الاختيارات وإعادة المحاولة.');
+                        this.showCustomAlert({
+                            icon: '❌',
+                            title: 'تنبيه',
+                            content: 'لم يتم العثور على أسئلة مناسبة. يرجى تعديل نسبة الإتقان أو الاختيارات وإعادة المحاولة.',
+                            confirmText: 'حسناً',
+                            showCancel: false
+                        });
+                        return;
                     }
                     
                     this.userAnswers = new Array(this.quizData.length).fill(-1);
@@ -1920,7 +2073,13 @@
                     
                     document.getElementById('statsWidget').style.display = 'block';
                 } catch (error) {
-                    alert('حدث خطأ أثناء تحميل الأسئلة. يرجى المحاولة مرة أخرى.');
+                    this.showCustomAlert({
+                        icon: '❌',
+                        title: 'خطأ',
+                        content: 'حدث خطأ أثناء تحميل الأسئلة. يرجى المحاولة مرة أخرى.',
+                        confirmText: 'حسناً',
+                        showCancel: false
+                    });
                     console.error(error);
                 }
             },
@@ -1944,68 +2103,47 @@
                     
                     const masteryPercent = this.calculateMastery(stats);
                     
-                    if (masteryPercent < 100) {
+                    // Only include questions with mastery below or equal to the limit
+                    if (masteryPercent <= this.maxMasteryLimit) {
                         allQuestions.push({
                             id: doc.id,
                             ...data,
                             stats: stats,
-                            masteryPercent: masteryPercent,
-                            priority: 100 - masteryPercent
+                            masteryPercent: masteryPercent
                         });
                     }
                 });
                 
                 if (allQuestions.length === 0) {
-                    alert('لا توجد أسئلة متاحة للاختبار. جميع الأسئلة متقنة!');
                     return;
                 }
                 
+                // Always apply type distribution filtering, regardless of mode
                 if (!this.markedOnly) {
                     const typePercentages = this.getQuestionTypePercentages();
                     const filteredByType = this.filterQuestionsByTypeDistribution(allQuestions, typePercentages);
                     
-                    if (!this.freeRunnerMode && filteredByType.length >= Math.min(this.questionCount, allQuestions.length)) {
+                    if (filteredByType.length > 0) {
                         allQuestions.length = 0;
                         allQuestions.push(...filteredByType);
                     }
                 }
                 
-                allQuestions.sort((a, b) => b.priority - a.priority);
+                // Simple shuffle without any priority
+                this.shuffleArray(allQuestions);
                 
-                const priorityGroups = [];
-                let currentPriority = -1;
-                let currentGroup = [];
-                
-                for (const q of allQuestions) {
-                    if (q.priority !== currentPriority) {
-                        if (currentGroup.length > 0) {
-                            priorityGroups.push(currentGroup);
-                        }
-                        currentPriority = q.priority;
-                        currentGroup = [q];
-                    } else {
-                        currentGroup.push(q);
-                    }
-                }
-                
-                if (currentGroup.length > 0) {
-                    priorityGroups.push(currentGroup);
-                }
-                
-                const shuffledQuestions = [];
-                for (const group of priorityGroups) {
-                    this.shuffleArray(group);
-                    shuffledQuestions.push(...group);
-                }
-                
-                this.allQuestions = [...shuffledQuestions];
+                this.allQuestions = [...allQuestions];
                 
                 if (!this.freeRunnerMode) {
-                    this.quizData = shuffledQuestions.slice(0, this.questionCount);
+                    this.quizData = allQuestions.slice(0, this.questionCount);
                 } else {
-                    this.quizData = shuffledQuestions;
+                    // In free runner mode, start with all available questions
+                    this.quizData = allQuestions.slice(0, 150); // Initial batch of 150
+                    // Remove the used questions from allQuestions
+                    allQuestions.splice(0, 150);
                 }
                 
+                // Final shuffle of selected questions
                 this.shuffleArray(this.quizData);
             },
             
@@ -2260,6 +2398,9 @@
                         masteryIndicator.textContent = `الإتقان: 100%`;
                     }
                     
+                    // Update mastery distribution chart
+                    this.updateMasteryDistributionChart();
+                    
                     // Show success feedback
                     this.showCustomAlert({
                         icon: '✓',
@@ -2311,6 +2452,9 @@
                         masteryIndicator.textContent = `الإتقان: 0%`;
                     }
                     
+                    // Update mastery distribution chart
+                    this.updateMasteryDistributionChart();
+                    
                     // Show success feedback
                     this.showCustomAlert({
                         icon: '✓',
@@ -2361,6 +2505,9 @@
                 db.collection('questions').doc(questionId).update({
                     'stats.attempts': firebase.firestore.FieldValue.increment(1),
                     'stats.correct': firebase.firestore.FieldValue.increment(isCorrect ? 1 : 0)
+                }).then(() => {
+                    // Update mastery distribution chart after updating stats
+                    this.updateMasteryDistributionChart();
                 }).catch(error => console.error('Error updating question stats:', error));
                 
                 const question = this.quizData[this.currentQuestion];
@@ -2482,8 +2629,9 @@
             
             addMoreQuestions() {
                 if (this.allQuestions.length > 0) {
-                    // Add more questions without being limited by user-set question count
-                    const additionalQuestions = this.allQuestions.splice(0, 10);
+                    // Add next batch of questions (150 at a time)
+                    const batchSize = Math.min(150, this.allQuestions.length);
+                    const additionalQuestions = this.allQuestions.splice(0, batchSize);
                     
                     this.quizData = [...this.quizData, ...additionalQuestions];
                     
