@@ -257,6 +257,7 @@
             font-size: 0.95rem;
             display: flex;
             align-items: center;
+            position: relative;
         }
 
         .option:hover {
@@ -1427,6 +1428,28 @@
             opacity: 1;
             transform: translateY(0);
         }
+
+        /* Add these styles in the <style> section */
+        .option.wrong.stealth-mode {
+            background: var(--card-bg) !important;
+            border: 2px solid var(--secondary-color) !important;
+        }
+
+        .option.wrong.stealth-mode::after {
+            content: '';
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            width: 8px;
+            height: 8px;
+            background-color: var(--wrong);
+            border-radius: 50%;
+        }
+
+        /* Ensure options have relative positioning for the dot */
+        .option {
+            position: relative;
+        }
     </style>
 </head>
 <body>
@@ -1578,7 +1601,7 @@
                 
                 <div class="question-count">
                     <label for="maxMasteryLimit">نسبة الإتقان لا تزيد عن:</label>
-                    <input type="number" id="maxMasteryLimit" min="0" max="100" value="100">
+                    <input type="number" id="maxMasteryLimit" min="0" max="100" value="99">
                     <span class="input-suffix">%</span>
                 </div>
 
@@ -1600,6 +1623,11 @@
                 <label class="checkbox-option">
                     <input type="checkbox" id="freeRunnerMode">
                     <span>الوضع الحر (Free Runner)</span>
+                </label>
+                
+                <label class="checkbox-option">
+                    <input type="checkbox" id="stealthMode">
+                    <span>الوضع الخفي</span>
                 </label>
                 
                 <div class="time-per-question free-runner-info" id="freeRunnerInfo" style="display: none;">
@@ -2014,6 +2042,11 @@
                     
                     document.getElementById('testDuration').disabled = e.target.checked;
                     document.getElementById('timePerQuestion').style.opacity = e.target.checked ? '0.5' : '1';
+                });
+                
+                document.getElementById('stealthMode').addEventListener('change', (e) => {
+                    // Add any additional logic you want to execute when stealth mode changes
+                    console.log('Stealth mode:', e.target.checked);
                 });
                 
                 window.addEventListener('resize', () => {
@@ -2489,14 +2522,19 @@
                 this.userAnswers[this.currentQuestion] = index;
                 this.updateProgress();
 
+                const stealthMode = document.getElementById('stealthMode').checked;
+
                 options.forEach((opt, idx) => {
                     if (idx === this.quizData[this.currentQuestion].correctIndex) {
                         opt.classList.add('correct');
                     } else if (idx === index && !isCorrect) {
                         opt.classList.add('wrong');
-                        
-                        const wrongText = opt.textContent;
-                        opt.innerHTML = this.highlightIncorrectWords(wrongText);
+                        if (stealthMode) {
+                            opt.classList.add('stealth-mode');
+                        } else {
+                            const wrongText = opt.textContent;
+                            opt.innerHTML = this.highlightIncorrectWords(wrongText);
+                        }
                     }
                 });
                 
