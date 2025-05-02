@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ا<!DOCTYPE html>
 
 <html dir="rtl" lang="ar">
 <head>
@@ -1315,6 +1315,149 @@
             border-right: 4px solid var(--correct);
         }
         
+        /* Blind Mode Button Styles */
+        .blind-mode-btn {
+            position: fixed;
+            top: 15px;
+            left: 15px;
+            background: var(--card-bg);
+            color: var(--text-color);
+            border: 1px solid var(--primary-color);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 100;
+            transition: all 0.3s ease;
+        }
+        
+        .blind-mode-btn:hover {
+            background: var(--primary-color);
+        }
+        
+        .blind-mode-btn svg {
+            width: 20px;
+            height: 20px;
+            fill: var(--text-color);
+        }
+        
+        .blind-mode-active .stats-widget,
+        .blind-mode-active .stats-widget,
+        .blind-mode-active .progress-text,
+        .blind-mode-active .streak-counter {
+            display: none !important;
+        }
+        
+        /* Streak Counter Styles */
+        .streak-counter {
+            position: fixed;
+            top: 15px;
+            right: 15px;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border-radius: 10px;
+            padding: 8px 15px;
+            font-size: 1rem;
+            font-weight: bold;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            z-index: 9999; /* Increased z-index to ensure visibility */
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .streak-counter .fire-icon {
+            color: #FFC107;
+            font-size: 1.2rem;
+            animation: flicker 1s infinite alternate;
+        }
+        
+        .streak-counter.milestone {
+            animation: pulse 0.5s ease-in-out;
+            transform: scale(1.2);
+        }
+        
+        @keyframes flicker {
+            0% { opacity: 0.8; text-shadow: 0 0 5px rgba(255, 193, 7, 0.5); }
+            100% { opacity: 1; text-shadow: 0 0 10px rgba(255, 193, 7, 0.8), 0 0 20px rgba(255, 193, 7, 0.5); }
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.3); }
+            100% { transform: scale(1.2); }
+        }
+        
+        .time-spent {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            margin-right: auto;
+            margin-left: 10px;
+        }
+        
+        /* Time Statistics Styles */
+        .time-stats-section {
+            background: var(--card-bg);
+            border-radius: 10px;
+            padding: 15px;
+            margin: 20px 0;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .time-stats-section h3 {
+            margin-top: 0;
+            color: var(--primary-color);
+            border-bottom: 2px solid var(--primary-color);
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .time-stats-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        
+        .time-stat-item {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border-radius: 8px;
+            padding: 15px;
+            color: white;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.3s;
+        }
+        
+        .time-stat-item:hover {
+            transform: translateY(-5px);
+        }
+        
+        .time-stat-icon {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+        
+        .time-stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .time-stat-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+        }
+        
         .custom-alert-icon {
             font-size: 1.3rem;
             margin-right: 0.5rem;
@@ -1472,6 +1615,20 @@
     </style>
 </head>
 <body>
+    <!-- Blind Mode Button -->
+    <button class="blind-mode-btn" id="blindModeBtn" title="الوضع الأعمى">
+        <svg viewBox="0 0 24 24">
+            <path d="M12,9A3,3 0 0,1 15,12A3,3 0 0,1 12,15A3,3 0 0,1 9,12A3,3 0 0,1 12,9M12,4.5C17,4.5 21.27,7.61 23,12C21.27,16.39 17,19.5 12,19.5C7,19.5 2.73,16.39 1,12C2.73,7.61 7,4.5 12,4.5M3.18,12C4.83,15.36 8.24,17.5 12,17.5C12.69,17.5 13.37,17.43 14,17.29L11.72,15C10.29,14.85 9.15,13.71 9,12.28L5.6,8.87C4.61,9.72 3.78,10.78 3.18,12Z" />
+            <path class="eye-slash" d="M2,5.27L3.28,4L20,20.72L18.73,22L15.65,18.92C14.5,19.3 13.28,19.5 12,19.5C7,19.5 2.73,16.39 1,12C1.69,10.24 2.79,8.69 4.19,7.46L2,5.27M12,9A3,3 0 0,1 15,12C15,12.35 14.94,12.69 14.83,13L11,9.17C11.31,9.06 11.65,9 12,9M12,4.5C17,4.5 21.27,7.61 23,12C22.18,14.08 20.79,15.88 19,17.19L17.58,15.76C18.94,14.82 20.06,13.54 20.82,12C19.17,8.64 15.76,6.5 12,6.5C10.91,6.5 9.84,6.68 8.84,7L7.3,5.47C8.74,4.85 10.33,4.5 12,4.5M3.18,12C4.83,15.36 8.24,17.5 12,17.5C12.69,17.5 13.37,17.43 14,17.29L11.72,15C10.29,14.85 9.15,13.71 9,12.28L5.6,8.87C4.61,9.72 3.78,10.78 3.18,12Z" style="display:none;" />
+        </svg>
+    </button>
+    
+    <!-- Streak Counter -->
+    <div class="streak-counter" id="streakCounter" style="display: none;">
+        <span class="fire-icon">🔥</span>
+        <span id="streakCount">0</span>
+    </div>
+    
     <div class="container">
         <div class="page creation-page active-page">
             <h2>اختبار القدرات - القسم اللفظي</h2>
@@ -1740,13 +1897,49 @@
                     <div class="final-score" id="finalScore"></div>
                 </div>
             </div>
+            
+            <div class="time-stats-section">
+                <h3>إحصائيات الوقت:</h3>
+                <div class="time-stats-container">
+                    <div class="time-stat-item">
+                        <div class="time-stat-icon">⏱</div>
+                        <div class="time-stat-value" id="averageTimePerQuestion">0 ثانية</div>
+                        <div class="time-stat-label">متوسط الوقت لكل سؤال</div>
+                    </div>
+                    <div class="time-stat-item">
+                        <div class="time-stat-icon">⏳</div>
+                        <div class="time-stat-value" id="totalTimeSpent">0 ثانية</div>
+                        <div class="time-stat-label">إجمالي الوقت المستغرق</div>
+                    </div>
+                    <div class="time-stat-item">
+                        <div class="time-stat-icon">📊</div>
+                        <div class="time-stat-value" id="fastestAnswer">0 ثانية</div>
+                        <div class="time-stat-label">أسرع إجابة</div>
+                    </div>
+                    <div class="time-stat-item">
+                        <div class="time-stat-icon">🔍</div>
+                        <div class="time-stat-value" id="slowestAnswer">0 ثانية</div>
+                        <div class="time-stat-label">أبطأ إجابة</div>
+                    </div>
+                    <div class="time-stat-item">
+                        <div class="time-stat-icon">⚡</div>
+                        <div class="time-stat-value" id="speedRate">0 ثانية</div>
+                        <div class="time-stat-label">معدل السرعة</div>
+                    </div>
+                    <div class="time-stat-item">
+                        <div class="time-stat-icon">🔥</div>
+                        <div class="time-stat-value" id="highestStreak">0</div>
+                        <div class="time-stat-label">أعلى ستريك</div>
+                    </div>
+                </div>
+            </div>
 
             <div class="marked-section">
                 <h3>الأسئلة المعلّمة:</h3>
                 <button class="copy-all-btn" id="copyAllMarkedBtn">
                     <svg viewBox="0 0 24 24">
-                        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7v2H5v14h14v-7h2v7a2 2 0 0 1-2 2z"/>
-                        <path d="M19 7h-2V5h2v2zm-4 0h-2V5h2v2zm-4 0H9V5h2v2zm8 4h-2V9h2v2zm-4 0h-2V9h2v2zm-4 0H9V9h2v2z"/>
+                        <path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z"/>
+                        <path d="M19,7H5V5H19V7ZM3,5H11V19H3V5Z"/>
                     </svg>
                     نسخ الأسئلة المعلّمة
                 </button>
@@ -1794,6 +1987,8 @@
             freeRunnerMode: false,
             allQuestions: [],
             resultsChart: null,
+            timePerQuestion: [],
+            currentStreak: 0,
             
             init() {
                 this.addEventListeners();
@@ -1803,6 +1998,9 @@
                 this.initQuestionTypesChart();
                 this.initMasteryDistributionChart();
                 this.setupTypeSliders();
+                this.timePerQuestion = [];
+                this.currentStreak = 0;
+                this.highestStreak = 0;
             },
             
             async initMasteryDistributionChart() {
@@ -2107,6 +2305,16 @@
             },
 
             async startQuiz() {
+                this.quizData = [];
+                this.userAnswers = [];
+                this.markedQuestions = new Set();
+                this.currentQuestion = 0;
+                this.timePerQuestion = [];
+                this.currentStreak = 0;
+                this.highestStreak = 0;
+                document.getElementById('streakCounter').style.display = 'none';
+                document.getElementById('streakCount').textContent = '0';
+                
                 this.questionCount = parseInt(document.getElementById('questionCount').value) || 20;
                 this.testDuration = parseInt(document.getElementById('testDuration').value) || 30;
                 this.markedOnly = document.getElementById('markedOnly').checked;
@@ -2301,6 +2509,9 @@
                 const container = document.getElementById('questionsContainer');
                 container.innerHTML = '';
                 
+                // Start timing for this question
+                this.questionStartTime = Date.now();
+                
                 const question = this.quizData[this.currentQuestion];
                 const questionDiv = document.createElement('div');
                 questionDiv.className = 'question-card';
@@ -2330,7 +2541,7 @@
                 questionDiv.innerHTML = `
                     <button class="mark-btn ${isMarked ? 'marked' : ''}" id="markBtn">
                         <svg viewBox="0 0 24 24">
-                            <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
+                            <path d="M12,17.27L18.18,21L16.54,13.97L22,9.24L14.81,8.62L12,2L9.19,8.62L2,9.24L7.45,13.97L5.82,21L12,17.27Z"/>
                         </svg>
                     </button>
                     <button class="mastery-shortcut-btn" id="masteryShortcutBtn" title="اختصار الإتقان">
@@ -2597,6 +2808,62 @@
             handleAnswer(index, isCorrect) {
                 const options = document.querySelectorAll('.option');
                 options.forEach(opt => opt.style.pointerEvents = 'none');
+                
+                // Calculate time spent on this question
+                if (this.questionStartTime) {
+                    const timeSpent = Math.round((Date.now() - this.questionStartTime) / 1000);
+                    this.timePerQuestion[this.currentQuestion] = timeSpent;
+                    console.log(`Time spent on question ${this.currentQuestion + 1}: ${timeSpent} seconds`);
+                } else {
+                    console.warn('Question start time not set');
+                    this.timePerQuestion[this.currentQuestion] = 0;
+                }
+                
+                // Update streak counter
+                if (isCorrect) {
+                    this.currentStreak++;
+                    
+                    // Update highest streak if current streak is higher
+                    if (this.currentStreak > this.highestStreak) {
+                        this.highestStreak = this.currentStreak;
+                        console.log('New highest streak:', this.highestStreak);
+                    }
+                    
+                    const streakCounter = document.getElementById('streakCounter');
+                    const streakCount = document.getElementById('streakCount');
+                    
+                    if (streakCount) streakCount.textContent = this.currentStreak;
+                    if (streakCounter) {
+                        streakCounter.style.display = 'flex';
+                        
+                        // Make sure the streak counter is visible (not hidden by CSS)
+                        streakCounter.style.visibility = 'visible';
+                        streakCounter.style.opacity = '1';
+                        
+                        // Add milestone animation for every 5 streak
+                        if (this.currentStreak % 5 === 0) {
+                            streakCounter.classList.add('milestone');
+                            setTimeout(() => {
+                                streakCounter.classList.remove('milestone');
+                            }, 1000);
+                        }
+                        
+                        // Log to console for debugging
+                        console.log('Streak updated:', this.currentStreak);
+                    } else {
+                        console.warn('Streak counter element not found');
+                    }
+                } else {
+                    this.currentStreak = 0;
+                    const streakCount = document.getElementById('streakCount');
+                    const streakCounter = document.getElementById('streakCounter');
+                    
+                    if (streakCount) streakCount.textContent = this.currentStreak;
+                    if (streakCounter) streakCounter.style.display = 'none';
+                    
+                    // Log to console for debugging
+                    console.log('Streak reset to 0');
+                }
 
                 this.userAnswers[this.currentQuestion] = index;
                 this.updateProgress();
@@ -2606,19 +2873,15 @@
                 options.forEach((opt, idx) => {
                     if (idx === this.quizData[this.currentQuestion].correctIndex) {
                         opt.classList.add('correct');
-                    } else if (idx === index && !isCorrect) {
+                    } else if (idx === this.userAnswers[this.currentQuestion]) {
                         opt.classList.add('wrong');
-                        if (stealthMode) {
-                            opt.classList.add('stealth-mode');
-                        } else {
-                            const wrongText = opt.textContent;
-                            opt.innerHTML = this.highlightIncorrectWords(wrongText);
-                        }
+                        opt.innerHTML = this.highlightIncorrectWords(opt.textContent);
                     }
+                    opt.style.pointerEvents = 'none';
                 });
-                
+
                 const questionId = this.quizData[this.currentQuestion].id;
-                
+
                 db.collection('questions').doc(questionId).update({
                     'stats.attempts': firebase.firestore.FieldValue.increment(1),
                     'stats.correct': firebase.firestore.FieldValue.increment(isCorrect ? 1 : 0)
@@ -2626,17 +2889,17 @@
                     // Update mastery distribution chart after updating stats
                     this.updateMasteryDistributionChart();
                 }).catch(error => console.error('Error updating question stats:', error));
-                
+
                 const question = this.quizData[this.currentQuestion];
                 question.stats.attempts = (question.stats.attempts || 0) + 1;
                 if (isCorrect) {
                     question.stats.correct = (question.stats.correct || 0) + 1;
                 }
-                
+
                 question.masteryPercent = this.calculateMastery(question.stats);
-                
+
                 this.updateStatsWidget();
-                
+
                 if (this.autoAdvance && isCorrect) {
                     setTimeout(() => {
                         if (this.currentQuestion < this.quizData.length - 1) {
@@ -2663,7 +2926,7 @@
                 const total = this.quizData.length;
                 const remaining = total - answered;
                 let percentage = Math.round((answered / total) * 100);
-                
+
                 if (this.freeRunnerMode) {
                     percentage = Math.min(100, Math.round((answered / (this.currentQuestion + 1)) * 100));
                 }
@@ -2810,6 +3073,54 @@
                 document.getElementById('unansweredCount').textContent = `${unanswered} غير مجابة`;
                 document.getElementById('finalScore').textContent = `النسبة النهائية: ${finalScore}%`;
                 
+                // Calculate time statistics
+                let totalTimeSpent = 0;
+                let answeredQuestionsCount = 0;
+                let fastestAnswer = Infinity;
+                let slowestAnswer = 0;
+                
+                this.timePerQuestion.forEach(time => {
+                    if (time !== undefined && time > 0) {
+                        totalTimeSpent += time;
+                        answeredQuestionsCount++;
+                        
+                        // Track fastest and slowest answers
+                        if (time < fastestAnswer) {
+                            fastestAnswer = time;
+                        }
+                        if (time > slowestAnswer) {
+                            slowestAnswer = time;
+                        }
+                    }
+                });
+                
+                const averageTimePerQuestion = answeredQuestionsCount > 0 ? 
+                    Math.round(totalTimeSpent / answeredQuestionsCount) : 0;
+                
+                // If no answers were recorded, set fastest to 0
+                if (fastestAnswer === Infinity) {
+                    fastestAnswer = 0;
+                }
+                
+                // Calculate speed rate: Total time / (Correct answers - 4 * Wrong answers)
+                const speedRateDenominator = correctAnswers - (4 * wrongAnswers);
+                let speedRate = 0;
+                
+                if (speedRateDenominator > 0) {
+                    speedRate = Math.round(totalTimeSpent / speedRateDenominator);
+                } else {
+                    // If denominator is zero or negative, display a special value
+                    speedRate = '∞';
+                }
+                
+                // Update time statistics in the UI
+                document.getElementById('averageTimePerQuestion').textContent = `${averageTimePerQuestion} ثانية`;
+                document.getElementById('totalTimeSpent').textContent = `${totalTimeSpent} ثانية`;
+                document.getElementById('fastestAnswer').textContent = `${fastestAnswer} ثانية`;
+                document.getElementById('slowestAnswer').textContent = `${slowestAnswer} ثانية`;
+                document.getElementById('speedRate').textContent = typeof speedRate === 'number' ? `${speedRate} ثانية` : speedRate;
+                document.getElementById('highestStreak').textContent = this.highestStreak || 0;
+                
                 this.createUnifiedChart(correctAnswers, wrongAnswers, unanswered);
                 
                 const wrongContainer = document.getElementById('wrongQuestionsDetails');
@@ -2817,6 +3128,13 @@
                 
                 this.userAnswers.forEach((userAnswer, index) => {
                     const question = this.quizData[index];
+                    
+                    // Skip if question is undefined
+                    if (!question) {
+                        console.warn(`Question at index ${index} is undefined`);
+                        return;
+                    }
+                    
                     const isCorrect = userAnswer !== -1 && userAnswer === question.correctIndex;
                     const isUnanswered = userAnswer === -1;
                     
@@ -2880,53 +3198,55 @@
             },
 
             createQuestionDetails(question, index, status) {
+                const isUnanswered = status === 'unanswered';
                 const userAnswer = this.userAnswers[index];
-                const isUnanswered = userAnswer === -1;
                 const isWrong = !isUnanswered && userAnswer !== question.correctIndex;
 
                 const cardDiv = document.createElement('div');
-                cardDiv.className = `question-details ${status}`;
+                cardDiv.className = `question-detail ${status}`;
+                
+                // Create header with question number, status, and time spent
+                const header = document.createElement('div');
+                header.className = 'question-detail-header';
+                
+                const questionNumber = document.createElement('span');
+                questionNumber.className = 'question-number';
+                questionNumber.textContent = `سؤال ${index + 1}`;
+                
+                const statusIndicator = document.createElement('span');
+                statusIndicator.className = 'status-indicator';
+                statusIndicator.textContent = status === 'correct' ? 'صحيح' : status === 'wrong' ? 'خطأ' : 'غير مجاب';
+                
+                // Add time spent indicator
+                const timeSpentEl = document.createElement('span');
+                timeSpentEl.className = 'time-spent';
+                if (this.timePerQuestion[index] !== undefined) {
+                    timeSpentEl.textContent = `${this.timePerQuestion[index]} ثانية`;
+                } else {
+                    timeSpentEl.textContent = 'غير محدد';
+                }
+                
+                header.appendChild(questionNumber);
+                header.appendChild(timeSpentEl);
+                header.appendChild(statusIndicator);
+                cardDiv.appendChild(header);
 
                 let userAnswerHtml = '';
-                if (!isUnanswered) {
+                if (!isUnanswered && question.options && userAnswer !== undefined && question.options[userAnswer]) {
                     const answerText = question.options[userAnswer].replace('*', '');
                     if (isWrong) {
                         userAnswerHtml = this.highlightIncorrectWords(answerText);
                     } else {
                         userAnswerHtml = answerText;
                     }
-                } else {
-                    userAnswerHtml = 'لم يتم الإجابة';
+                } else if (!isUnanswered) {
+                    userAnswerHtml = 'غير متوفر';
                 }
-
-                const isErrorTypeQuestion = 
-                    question.type === 'خطأ' || 
-                    question.question.includes('خطأ:') || 
-                    question.question.includes('الخطأ:') ||
-                    question.options.some(opt => opt.includes('*'));
-
-                const isComprehensionQuestion = 
-                    question.type === 'استيعاب' && 
-                    question.Passage && 
-                    question.Passage.length > 0;
-
-                let highlightedQuestion;
-                if (isErrorTypeQuestion) {
-                    highlightedQuestion = this.highlightOptionsInQuestion(question.question, question.options);
-                } else {
-                    highlightedQuestion = question.question;
-                }
-
-                const passagePreview = isComprehensionQuestion ? 
-                    `<div class="passage-preview">
-                        <div class="passage-preview-content">${question.Passage.substring(0, 100)}...</div>
-                    </div>` : '';
-
+                
                 const answerDetails = `
-                    ${passagePreview}
                     <div class="question-header">
                         <h4>
-                            ${highlightedQuestion}
+                            ${question.question}
                             <span class="status-indicator"></span>
                         </h4>
                     </div>
@@ -2937,7 +3257,7 @@
                         </div>
                         <div class="correct-answer">
                             <strong>الإجابة الصحيحة:</strong>
-                            <p>${question.options[question.correctIndex].replace('*', '')}</p>
+                            <p>${question.options && question.correctIndex !== undefined && question.options[question.correctIndex] ? question.options[question.correctIndex].replace('*', '') : 'غير متوفر'}</p>
                         </div>
                     </div>
                 `;
@@ -2953,16 +3273,9 @@
                     
                 copyBtn.onclick = () => navigator.clipboard.writeText(questionText);
 
-                const header = cardDiv.querySelector('.question-header');
-                header.insertBefore(copyBtn, header.querySelector('h4'));
+                const questionHeader = cardDiv.querySelector('.question-header');
+                questionHeader.insertBefore(copyBtn, questionHeader.querySelector('h4'));
                 
-                if (isComprehensionQuestion) {
-                    const previewElement = cardDiv.querySelector('.passage-preview');
-                    previewElement.addEventListener('click', () => {
-                        this.showPassageModal(question.Passage);
-                    });
-                }
-
                 return cardDiv;
             },
             
@@ -3015,8 +3328,24 @@
             },
             
             setupPassageModal(passage) {
+                // First check if passage exists and is not empty
+                if (!passage || passage.trim() === '') {
+                    console.log('No passage content to display');
+                    return;
+                }
+                
+                // Use direct DOM access instead of setTimeout
                 const preview = document.getElementById('passagePreview');
                 const modal = document.getElementById('passageModal');
+                
+                // Check if elements exist before proceeding
+                if (!preview || !modal) {
+                    // Use the showPassageModal function as a fallback
+                    console.log('Using global passage modal as fallback');
+                    this.showPassageModal(passage);
+                    return;
+                }
+                
                 const closeBtn = modal.querySelector('.passage-modal-close');
                 
                 // Function to open the modal
@@ -3031,16 +3360,19 @@
                     document.body.style.overflow = '';
                 };
                 
-                // Event listeners
-                preview.addEventListener('click', openModal);
-                closeBtn.addEventListener('click', closeModal);
+                // Add click event directly to the preview element
+                preview.onclick = openModal;
+                
+                if (closeBtn) {
+                    closeBtn.onclick = closeModal;
+                }
                 
                 // Close when clicking outside the content
-                modal.addEventListener('click', (e) => {
+                modal.onclick = (e) => {
                     if (e.target === modal) {
                         closeModal();
                     }
-                });
+                };
                 
                 // Close on escape key
                 document.addEventListener('keydown', (e) => {
@@ -3201,83 +3533,38 @@
                     !vocabularyQuestions.includes(q)
                 );
                 
-                // In free runner mode, use all questions; otherwise limit by questionCount
-                const totalQuestions = this.freeRunnerMode ? questions.length : Math.min(this.questionCount, questions.length);
+                // Combine all filtered questions
+                const filteredQuestions = [
+                    ...errorQuestions,
+                    ...comprehensionQuestions,
+                    ...analogyQuestions,
+                    ...completionQuestions,
+                    ...vocabularyQuestions
+                ];
                 
-                // Calculate counts for each active type based on normalized percentages
-                const counts = {};
-                let totalAllocated = 0;
-                
-                activeTypes.forEach(type => {
-                    counts[type] = Math.floor((normalizedPercentages[type] / 100) * totalQuestions);
-                    totalAllocated += counts[type];
-                });
-                
-                // Distribute remaining questions based on decimal parts
-                const remaining = totalQuestions - totalAllocated;
-                
-                if (remaining > 0) {
-                    const typesByDecimal = activeTypes.map(type => {
-                        const exactCount = (normalizedPercentages[type] / 100) * totalQuestions;
-                        const decimalPart = exactCount - Math.floor(exactCount);
-                        return { type, decimalPart };
-                    }).sort((a, b) => b.decimalPart - a.decimalPart);
-                    
-                    for (let i = 0; i < remaining; i++) {
-                        counts[typesByDecimal[i % typesByDecimal.length].type]++;
-                    }
+                // If we have filtered questions, use them
+                if (filteredQuestions.length > 0) {
+                    questions = filteredQuestions;
                 }
                 
-                const shuffleAndSlice = (arr, count) => {
-                    this.shuffleArray(arr);
-                    return arr.slice(0, count);
-                };
+                // Shuffle the questions
+                this.shuffleArray(questions);
                 
-                // Get questions for each type based on calculated counts
-                let finalQuestions = [];
-                
-                if (activeTypes.includes('error')) {
-                    const errorCount = counts['error'] || 0;
-                    finalQuestions = [...finalQuestions, 
-                        ...shuffleAndSlice(errorQuestions, Math.min(errorQuestions.length, errorCount))];
+                // Step 4: Prepare quiz data
+                if (this.freeRunnerMode) {
+                    // In free runner mode, include ALL questions that meet the conditions
+                    this.quizData = [...questions];
+                    this.allQuestions = []; // Clear since we've used all questions
+                } else {
+                    // In normal mode, limit by question count
+                    this.quizData = questions.slice(0, this.questionCount);
+                    // Save remaining questions for later
+                    this.allQuestions = questions.slice(this.questionCount);
                 }
                 
-                if (activeTypes.includes('comprehension')) {
-                    const comprehensionCount = counts['comprehension'] || 0;
-                    finalQuestions = [...finalQuestions, 
-                        ...shuffleAndSlice(comprehensionQuestions, Math.min(comprehensionQuestions.length, comprehensionCount))];
-                }
-                
-                if (activeTypes.includes('analogy')) {
-                    const analogyCount = counts['analogy'] || 0;
-                    finalQuestions = [...finalQuestions, 
-                        ...shuffleAndSlice(analogyQuestions, Math.min(analogyQuestions.length, analogyCount))];
-                }
-                
-                if (activeTypes.includes('completion')) {
-                    const completionCount = counts['completion'] || 0;
-                    finalQuestions = [...finalQuestions, 
-                        ...shuffleAndSlice(completionQuestions, Math.min(completionQuestions.length, completionCount))];
-                }
-                
-                if (activeTypes.includes('vocabulary')) {
-                    const vocabularyCount = counts['vocabulary'] || 0;
-                    finalQuestions = [...finalQuestions, 
-                        ...shuffleAndSlice(vocabularyQuestions, Math.min(vocabularyQuestions.length, vocabularyCount))];
-                }
-                
-                // If we still need more questions, use questions from other types
-                if (finalQuestions.length < totalQuestions && otherQuestions.length > 0) {
-                    const deficit = totalQuestions - finalQuestions.length;
-                    const otherQuestionsToAdd = shuffleAndSlice(otherQuestions, Math.min(otherQuestions.length, deficit));
-                    finalQuestions = [...finalQuestions, ...otherQuestionsToAdd];
-                }
-                
-                // Final shuffle to make sure the question order is random
-                this.shuffleArray(finalQuestions);
-                return finalQuestions;
+                return this.quizData;
             },
-
+            
             setupTypeSliders() {
                 // Initialize deleted slider tracker if not already initialized
                 if (!this.undoInitialized) {
@@ -3876,6 +4163,36 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             quizApp.init();
+            
+            // Blind Mode Functionality
+            const blindModeBtn = document.getElementById('blindModeBtn');
+            const eyeSlash = blindModeBtn.querySelector('.eye-slash');
+            let blindModeActive = false;
+            
+            blindModeBtn.addEventListener('click', () => {
+                blindModeActive = !blindModeActive;
+                document.body.classList.toggle('blind-mode-active', blindModeActive);
+                
+                // Toggle the eye slash icon
+                if (blindModeActive) {
+                    eyeSlash.style.display = 'block';
+                    blindModeBtn.querySelector('path:not(.eye-slash)').style.display = 'none';
+                } else {
+                    eyeSlash.style.display = 'none';
+                    blindModeBtn.querySelector('path:not(.eye-slash)').style.display = 'block';
+                }
+                
+                // Save preference to localStorage
+                localStorage.setItem('blindModeActive', blindModeActive);
+            });
+            
+            // Check if blind mode was previously enabled
+            if (localStorage.getItem('blindModeActive') === 'true') {
+                blindModeActive = true;
+                document.body.classList.add('blind-mode-active');
+                eyeSlash.style.display = 'block';
+                blindModeBtn.querySelector('path:not(.eye-slash)').style.display = 'none';
+            }
         });
     </script>
 <script>
