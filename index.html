@@ -3111,12 +3111,27 @@
                     speedRate = '∞';
                 }
                 
+                // Format time function to convert seconds to minutes and seconds
+                const formatTime = (seconds) => {
+                    if (seconds < 60) {
+                        return `${seconds} ثانية`;
+                    } else {
+                        const minutes = Math.floor(seconds / 60);
+                        const remainingSeconds = seconds % 60;
+                        if (remainingSeconds === 0) {
+                            return `${minutes} دقيقة`;
+                        } else {
+                            return `${minutes} دقيقة و ${remainingSeconds} ثانية`;
+                        }
+                    }
+                };
+                
                 // Update time statistics in the UI
-                document.getElementById('averageTimePerQuestion').textContent = `${averageTimePerQuestion} ثانية`;
-                document.getElementById('totalTimeSpent').textContent = `${totalTimeSpent} ثانية`;
-                document.getElementById('fastestAnswer').textContent = `${fastestAnswer} ثانية`;
-                document.getElementById('slowestAnswer').textContent = `${slowestAnswer} ثانية`;
-                document.getElementById('speedRate').textContent = typeof speedRate === 'number' ? `${speedRate} ثانية` : speedRate;
+                document.getElementById('averageTimePerQuestion').textContent = formatTime(averageTimePerQuestion);
+                document.getElementById('totalTimeSpent').textContent = formatTime(totalTimeSpent);
+                document.getElementById('fastestAnswer').textContent = formatTime(fastestAnswer);
+                document.getElementById('slowestAnswer').textContent = formatTime(slowestAnswer);
+                document.getElementById('speedRate').textContent = typeof speedRate === 'number' ? formatTime(speedRate) : speedRate;
                 document.getElementById('highestStreak').textContent = this.highestStreak || 0;
                 
                 this.createUnifiedChart(correctAnswers, wrongAnswers, unanswered);
@@ -3219,7 +3234,19 @@
                 const timeSpentEl = document.createElement('span');
                 timeSpentEl.className = 'time-spent';
                 if (this.timePerQuestion[index] !== undefined) {
-                    timeSpentEl.textContent = `${this.timePerQuestion[index]} ثانية`;
+                    // Format time in minutes and seconds
+                    const seconds = this.timePerQuestion[index];
+                    if (seconds < 60) {
+                        timeSpentEl.textContent = `${seconds} ثانية`;
+                    } else {
+                        const minutes = Math.floor(seconds / 60);
+                        const remainingSeconds = seconds % 60;
+                        if (remainingSeconds === 0) {
+                            timeSpentEl.textContent = `${minutes} دقيقة`;
+                        } else {
+                            timeSpentEl.textContent = `${minutes} دقيقة و ${remainingSeconds} ثانية`;
+                        }
+                    }
                 } else {
                     timeSpentEl.textContent = 'غير محدد';
                 }
