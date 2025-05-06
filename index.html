@@ -1,4 +1,4 @@
-ا<!DOCTYPE html>
+<!DOCTYPE html>
 
 <html dir="rtl" lang="ar">
 <head>
@@ -1454,7 +1454,6 @@
             font-size: 0.9rem;
             opacity: 0.9;
         }
-        }
         
         .custom-alert-icon {
             font-size: 1.3rem;
@@ -1609,6 +1608,104 @@
 
         .extract-comprehension-btn:hover {
             background-color: #1976D2;
+        }
+
+        /* Question timer styles */
+        .question-timer {
+            position: absolute;
+            top: 0.5rem;
+            left: 3rem;
+            font-size: 0.75rem;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 0.25rem 0.5rem;
+            border-radius: 10px;
+            z-index: 10;
+            color: var(--text-color);
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .question-timer:hover {
+            background: rgba(108, 92, 231, 0.6);
+        }
+
+        /* Emergency Pause Overlay */
+        .emergency-pause-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.85);
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s, visibility 0.3s;
+        }
+        
+        .emergency-pause-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .emergency-pause-content {
+            background-color: var(--card-bg);
+            border-radius: 15px;
+            padding: 2rem;
+            max-width: 90%;
+            width: 500px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+            border: 2px solid var(--primary-color);
+        }
+        
+        .emergency-pause-icon {
+            font-size: 3rem;
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+        }
+        
+        .emergency-pause-title {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+        
+        .emergency-pause-message {
+            font-size: 1.2rem;
+            line-height: 1.6;
+        }
+        
+        .emergency-pause-timer {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: var(--text-color);
+            margin: 1rem 0;
+        }
+        
+        .emergency-pause-button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 10px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            align-self: center;
+            transition: all 0.2s ease;
+        }
+        
+        .emergency-pause-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
         }
     </style>
 </head>
@@ -1842,6 +1939,18 @@
         </div>
 
         <div class="mobile-tooltip" id="mobileTooltip"></div>
+        
+        <!-- Emergency Pause Overlay -->
+        <div class="emergency-pause-overlay" id="emergencyPauseOverlay">
+            <div class="emergency-pause-content">
+                <div class="emergency-pause-icon">⏸️</div>
+                <h2 class="emergency-pause-title">توقف مؤقت للاختبار</h2>
+                <p class="emergency-pause-message">تم إيقاف الاختبار مؤقتًا. يمكنك استئناف الاختبار عند الاستعداد.</p>
+                <div class="emergency-pause-timer" id="pauseTimer">00:00</div>
+                <p class="emergency-pause-remaining" id="emergencyPauseRemaining">متبقي لديك 0 إيقاف من أصل 0</p>
+                <button class="emergency-pause-button" id="resumeButton">استئناف الاختبار</button>
+            </div>
+        </div>
 
         <div class="page quiz-page">
             <div class="progress-bar">
@@ -1987,6 +2096,11 @@
             resultsChart: null,
             timePerQuestion: [],
             currentStreak: 0,
+            emergencyPauseUsed: 0,
+            emergencyPauseAllowed: 1,
+            emergencyPauseActive: false,
+            emergencyPauseStartTime: 0,
+            pauseTimer: null,
             
             init() {
                 this.addEventListeners();
@@ -1999,6 +2113,12 @@
                 this.timePerQuestion = [];
                 this.currentStreak = 0;
                 this.highestStreak = 0;
+                
+                // إعادة تعيين عداد الإيقافات الطارئة عند بدء التطبيق
+                this.emergencyPauseUsed = 0;
+                
+                // إضافة مستمع للضغط على المؤقت للإيقاف الطارئ
+                this.setupEmergencyPause();
             },
             
             async initMasteryDistributionChart() {
@@ -2310,8 +2430,6 @@
                 this.timePerQuestion = [];
                 this.currentStreak = 0;
                 this.highestStreak = 0;
-                document.getElementById('streakCounter').style.display = 'none';
-                document.getElementById('streakCount').textContent = '0';
                 
                 this.questionCount = parseInt(document.getElementById('questionCount').value) || 20;
                 this.testDuration = parseInt(document.getElementById('testDuration').value) || 30;
@@ -2319,6 +2437,15 @@
                 this.autoAdvance = document.getElementById('autoAdvance').checked;
                 this.freeRunnerMode = document.getElementById('freeRunnerMode').checked;
                 this.maxMasteryLimit = parseInt(document.getElementById('maxMasteryLimit').value) || 100;
+                
+                // إعادة تعيين عداد الإيقافات الطارئة مع كل اختبار جديد
+                this.emergencyPauseUsed = 0;
+                // حساب عدد الإيقافات المسموح بها بناءً على العدد الإجمالي للأسئلة (إيقاف واحد لكل 1000 سؤال)
+                this.emergencyPauseAllowed = Math.max(1, Math.floor(this.questionCount / 1000));
+                this.emergencyPauseActive = false;
+                
+                document.getElementById('streakCounter').style.display = 'none';
+                document.getElementById('streakCount').textContent = '0';
                 
                 try {
                     await this.fetchQuestions();
@@ -2463,6 +2590,23 @@
                 
                 // Final shuffle of selected questions
                 this.shuffleArray(this.quizData);
+                
+                // خلط خيارات كل سؤال مع الحفاظ على الإجابة الصحيحة
+                this.shuffleAllOptions();
+            },
+            
+            // إضافة دالة لخلط خيارات جميع الأسئلة
+            shuffleAllOptions() {
+                this.quizData.forEach(question => {
+                    // حفظ الإجابة الصحيحة قبل الخلط
+                    const correctOption = question.options[question.correctIndex];
+                    
+                    // خلط الخيارات
+                    this.shuffleArray(question.options);
+                    
+                    // تحديث مؤشر الإجابة الصحيحة بعد الخلط
+                    question.correctIndex = question.options.indexOf(correctOption);
+                });
             },
             
             calculateMastery(stats) {
@@ -2555,6 +2699,7 @@
                     <div class="mastery-indicator ${isMarked ? 'marked' : ''}">
                         ${isMarked ? 'سؤال معلّم' : `الإتقان: ${question.masteryPercent}%`}
                     </div>
+                    <div class="question-timer" id="questionTimer">0</div>
                     ${isComprehensionQuestion ? this.createPassagePreview(question.Passage) : ''}
                     <h2>${highlightedQuestion}</h2>
                     <div class="options-grid"></div>
@@ -2608,6 +2753,9 @@
                 
                 this.updateNavigationButtons();
                 this.updateStatsWidget();
+
+                // Start the question timer
+                this.startQuestionTimer();
             },
             
             highlightOptionsInQuestion(questionText, options) {
@@ -2807,6 +2955,11 @@
                 const options = document.querySelectorAll('.option');
                 options.forEach(opt => opt.style.pointerEvents = 'none');
                 
+                // Stop the question timer when answering
+                if (this.questionTimerInterval) {
+                    clearInterval(this.questionTimerInterval);
+                }
+                
                 // Calculate time spent on this question
                 if (this.questionStartTime) {
                     const timeSpent = Math.round((Date.now() - this.questionStartTime) / 1000);
@@ -2999,6 +3152,11 @@
             },
 
             nextQuestion() {
+                // Clear the question timer when moving to next question
+                if (this.questionTimerInterval) {
+                    clearInterval(this.questionTimerInterval);
+                }
+                
                 if (this.freeRunnerMode) {
                     if (this.currentQuestion >= this.quizData.length - 1) {
                         this.addMoreQuestions();
@@ -3042,6 +3200,11 @@
             },
             
             previousQuestion() {
+                // Clear the question timer when moving to previous question
+                if (this.questionTimerInterval) {
+                    clearInterval(this.questionTimerInterval);
+                }
+                
                 if (this.currentQuestion > 0) {
                     this.currentQuestion--;
                     this.renderQuestion();
@@ -3050,6 +3213,11 @@
             },
 
             showResults() {
+                // Clear the question timer when showing results
+                if (this.questionTimerInterval) {
+                    clearInterval(this.questionTimerInterval);
+                }
+                
                 clearInterval(this.totalTimer);
                 document.getElementById('statsWidget').style.display = 'none';
                 
@@ -4183,6 +4351,152 @@
                         y: chartCenterY + normalizedY * (radius + padding)
                     };
                 };
+            },
+
+            // Add question timer methods
+            startQuestionTimer() {
+                // Clear any existing timer
+                if (this.questionTimerInterval) {
+                    clearInterval(this.questionTimerInterval);
+                }
+                
+                // Get start time
+                const startTime = Date.now();
+                const timerElement = document.getElementById('questionTimer');
+                
+                if (!timerElement) return;
+                
+                // Set initial value
+                timerElement.textContent = '0';
+                
+                // Update the timer every second - show seconds only
+                this.questionTimerInterval = setInterval(() => {
+                    const elapsedSeconds = Math.floor((Date.now() - startTime) / 1000);
+                    timerElement.textContent = elapsedSeconds.toString();
+                }, 1000);
+            },
+
+            setupEmergencyPause() {
+                // تحديث: استبدال مستمع Ctrl+Y بمستمع للضغط على المؤقت
+                document.addEventListener('click', (e) => {
+                    // التحقق من أن المستخدم في صفحة الاختبار
+                    if (!document.querySelector('.quiz-page.active-page')) return;
+                    
+                    // التحقق من الضغط على المؤقت
+                    if (e.target.id === 'questionTimer' || e.target.closest('#questionTimer')) {
+                        this.triggerEmergencyPause();
+                    }
+                });
+                
+                // إعداد زر الاستئناف
+                const resumeButton = document.getElementById('resumeButton');
+                if (resumeButton) {
+                    resumeButton.addEventListener('click', () => {
+                        this.resumeFromEmergencyPause();
+                    });
+                }
+            },
+            
+            triggerEmergencyPause() {
+                // تحديث عدد الإيقافات المتبقية
+                const remainingPauses = Math.max(0, this.emergencyPauseAllowed - this.emergencyPauseUsed);
+                
+                // عرض عدد الإيقافات المتبقية
+                const remainingElement = document.getElementById('emergencyPauseRemaining');
+                if (remainingElement) {
+                    remainingElement.textContent = `متبقي لديك ${remainingPauses} إيقاف من أصل ${this.emergencyPauseAllowed} في هذا الاختبار`;
+                }
+                
+                // التحقق من أن المستخدم لم يستخدم جميع الإيقافات المسموح بها
+                if (this.emergencyPauseUsed >= this.emergencyPauseAllowed) {
+                    this.showCustomAlert({
+                        icon: '⚠️',
+                        title: 'تنبيه',
+                        content: 'لقد استخدمت جميع الإيقافات الطارئة المسموح بها لهذا الاختبار!',
+                        confirmText: 'حسناً',
+                        showCancel: false
+                    });
+                    return;
+                }
+                
+                // إذا كان الإيقاف بالفعل نشطًا
+                if (this.emergencyPauseActive) {
+                    this.showCustomAlert({
+                        icon: 'ℹ️',
+                        title: 'تنبيه',
+                        content: 'الاختبار متوقف بالفعل!',
+                        confirmText: 'حسناً',
+                        showCancel: false
+                    });
+                    return;
+                }
+                
+                // تفعيل الإيقاف الطارئ
+                this.emergencyPauseActive = true;
+                this.emergencyPauseUsed++;
+                this.emergencyPauseStartTime = Date.now();
+                
+                // إيقاف كل المؤقتات
+                if (this.totalTimer) {
+                    clearInterval(this.totalTimer);
+                }
+                
+                if (this.questionTimerInterval) {
+                    clearInterval(this.questionTimerInterval);
+                }
+                
+                // إظهار شاشة الإيقاف الطارئ
+                const overlay = document.getElementById('emergencyPauseOverlay');
+                if (overlay) {
+                    overlay.classList.add('active');
+                    
+                    // تحديث عدد الإيقافات المتبقية
+                    remainingElement.textContent = `متبقي لديك ${remainingPauses - 1} إيقاف من أصل ${this.emergencyPauseAllowed} في هذا الاختبار`;
+                }
+                
+                // بدء مؤقت الإيقاف
+                this.startPauseTimer();
+            },
+            
+            startPauseTimer() {
+                const pauseTimerElement = document.getElementById('pauseTimer');
+                if (!pauseTimerElement) return;
+                
+                this.pauseTimer = setInterval(() => {
+                    const elapsedTime = Math.floor((Date.now() - this.emergencyPauseStartTime) / 1000);
+                    const minutes = Math.floor(elapsedTime / 60).toString().padStart(2, '0');
+                    const seconds = (elapsedTime % 60).toString().padStart(2, '0');
+                    
+                    pauseTimerElement.textContent = `${minutes}:${seconds}`;
+                }, 1000);
+            },
+            
+            resumeFromEmergencyPause() {
+                if (!this.emergencyPauseActive) return;
+                
+                // إيقاف مؤقت الإيقاف
+                if (this.pauseTimer) {
+                    clearInterval(this.pauseTimer);
+                }
+                
+                // إخفاء شاشة الإيقاف
+                const overlay = document.getElementById('emergencyPauseOverlay');
+                if (overlay) {
+                    overlay.classList.remove('active');
+                }
+                
+                // تحديث وقت البدء لحساب الوقت المتبقي بشكل صحيح
+                if (!this.freeRunnerMode) {
+                    const pauseDuration = Math.floor((Date.now() - this.emergencyPauseStartTime) / 1000);
+                    this.startTime += (pauseDuration * 1000);
+                    this.startTotalTimer();
+                }
+                
+                // إعادة تشغيل مؤقت السؤال
+                this.startQuestionTimer();
+                
+                // إعادة تعيين حالة الإيقاف
+                this.emergencyPauseActive = false;
             },
         };
 
