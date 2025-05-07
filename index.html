@@ -42,6 +42,7 @@
             min-height: 100vh;
             display: flex;
             flex-direction: column;
+            margin-bottom: 50px;
         }
 
         .page {
@@ -1707,6 +1708,92 @@
             transform: translateY(-3px);
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
         }
+
+        /* Time Bar Styles */
+        .time-bar {
+            position: fixed;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 50%;
+            height: 20px;
+            display: flex;
+            gap: 8px;
+            overflow-x: hidden;
+            white-space: nowrap;
+            z-index: 100;
+            direction: ltr;
+            mask-image: linear-gradient(to right, black 90%, transparent);
+            -webkit-mask-image: linear-gradient(to right, black 90%, transparent);
+        }
+
+        .time-item {
+            font-size: 0.75rem;
+            opacity: 0.8;
+            min-width: auto;
+            padding: 0;
+            background: none;
+            animation: timeItemEntryLTR 0.3s forwards;
+            transform: translateX(10px);
+        }
+
+        .time-item.under {
+            color: var(--correct);
+        }
+
+        .time-item.over {
+            color: var(--wrong);
+        }
+
+        .time-item.equal {
+            color: var(--text-color);
+        }
+
+        @keyframes timeItemEntryLTR {
+            from {
+                opacity: 0;
+                transform: translateX(10px);
+            }
+            to {
+                opacity: 0.8;
+                transform: translateX(0);
+            }
+        }
+
+        /* Remaining Time Per Question Indicator */
+        .remaining-time-per-question {
+            position: fixed;
+            top: 5px;
+            right: 5px;
+            font-size: 0.6rem;
+            color: var(--text-color);
+            opacity: 0.7;
+            z-index: 100;
+            background: transparent;
+            padding: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .time-standard {
+            color: var(--text-color);
+        }
+
+        .time-difference {
+            font-size: 0.7rem;
+            transition: color 0.3s ease;
+        }
+
+        .time-difference.positive {
+            color: var(--correct);
+        }
+
+        .time-difference.negative {
+            color: var(--wrong);
+        }
     </style>
 </head>
 <body>
@@ -1953,6 +2040,10 @@
         </div>
 
         <div class="page quiz-page">
+            <div class="remaining-time-per-question" id="remainingTimePerQuestion">
+                <span class="time-standard" id="timeStandard"></span>
+                <span class="time-difference" id="timeDifference"></span>
+            </div>
             <div class="progress-bar">
                 <div class="progress-bar-fill" id="progressBarFill"></div>
                 <div class="progress-text" id="progressText">الأسئلة المحلولة: 0/0</div>
@@ -2062,6 +2153,8 @@
         </div>
     </div>
 
+    <div class="time-bar" id="timeBar"></div>
+
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -2101,6 +2194,9 @@
             emergencyPauseActive: false,
             emergencyPauseStartTime: 0,
             pauseTimer: null,
+            questionTimes: [], // Array to store question completion times
+            timeStandardValue: 0,
+            timeDifferenceValue: 0,
             
             init() {
                 this.addEventListeners();
@@ -2113,6 +2209,9 @@
                 this.timePerQuestion = [];
                 this.currentStreak = 0;
                 this.highestStreak = 0;
+                this.questionTimes = [];
+                this.timeStandardValue = 0;
+                this.timeDifferenceValue = 0;
                 
                 // إعادة تعيين عداد الإيقافات الطارئة عند بدء التطبيق
                 this.emergencyPauseUsed = 0;
@@ -2960,10 +3059,11 @@
                     clearInterval(this.questionTimerInterval);
                 }
                 
-                // Calculate time spent on this question
+                // Calculate time spent on this question and add to time bar
                 if (this.questionStartTime) {
                     const timeSpent = Math.round((Date.now() - this.questionStartTime) / 1000);
                     this.timePerQuestion[this.currentQuestion] = timeSpent;
+                    this.addTimeToBar(timeSpent);
                     console.log(`Time spent on question ${this.currentQuestion + 1}: ${timeSpent} seconds`);
                 } else {
                     console.warn('Question start time not set');
@@ -3135,6 +3235,9 @@
                     const minutes = Math.floor(remaining / 60).toString().padStart(2, '0');
                     const seconds = (remaining % 60).toString().padStart(2, '0');
                     document.getElementById('totalTimer').textContent = `الوقت المتبقي: ${minutes}:${seconds}`;
+                    
+                    // Update remaining time per question
+                    this.updateRemainingTimePerQuestion();
                 }, 1000);
             },
 
@@ -3213,9 +3316,16 @@
             },
 
             showResults() {
-                // Clear the question timer when showing results
-                if (this.questionTimerInterval) {
-                    clearInterval(this.questionTimerInterval);
+                // Clear the time bar
+                const timeBar = document.getElementById('timeBar');
+                if (timeBar) {
+                    timeBar.innerHTML = '';
+                }
+                
+                // Hide remaining time per question
+                const remainingTimeElement = document.getElementById('remainingTimePerQuestion');
+                if (remainingTimeElement) {
+                    remainingTimeElement.style.display = 'none';
                 }
                 
                 clearInterval(this.totalTimer);
@@ -4497,6 +4607,70 @@
                 
                 // إعادة تعيين حالة الإيقاف
                 this.emergencyPauseActive = false;
+            },
+
+            // Update remaining time per question indicator
+            updateRemainingTimePerQuestion() {
+                if (this.freeRunnerMode) return;
+                
+                const remainingTimeElement = document.getElementById('timeStandard');
+                const timeDifferenceElement = document.getElementById('timeDifference');
+                if (!remainingTimeElement || !timeDifferenceElement) return;
+
+                const elapsed = Math.floor((Date.now() - this.startTime) / 1000);
+                const remainingTime = Math.max(0, this.totalTime - elapsed);
+                const remainingQuestions = this.quizData.length - this.userAnswers.filter(ans => ans !== -1).length;
+                
+                if (remainingQuestions === 0) {
+                    remainingTimeElement.textContent = '';
+                    timeDifferenceElement.textContent = '';
+                    return;
+                }
+
+                const timePerQuestion = Math.floor(remainingTime / remainingQuestions);
+                this.timeStandardValue = timePerQuestion;
+                remainingTimeElement.textContent = `${timePerQuestion}"`;
+                
+                // Show time difference if it exists
+                if (this.timeDifferenceValue !== 0) {
+                    const sign = this.timeDifferenceValue > 0 ? '+' : '';
+                    timeDifferenceElement.textContent = `${sign}${this.timeDifferenceValue.toFixed(1)}"`;
+                    timeDifferenceElement.className = 'time-difference ' + 
+                        (this.timeDifferenceValue > 0 ? 'positive' : 'negative');
+                }
+            },
+
+            // Add new method to add time to time bar
+            addTimeToBar(seconds) {
+                const timeBar = document.getElementById('timeBar');
+                if (!timeBar) return;
+
+                const timeItem = document.createElement('div');
+                timeItem.className = 'time-item';
+                
+                // Compare with standard time and set color
+                if (seconds < this.timeStandardValue) {
+                    timeItem.classList.add('under');
+                    // Add the difference to the time difference value
+                    this.timeDifferenceValue += (this.timeStandardValue - seconds);
+                } else if (seconds > this.timeStandardValue) {
+                    timeItem.classList.add('over');
+                    // Subtract from the time difference value
+                    this.timeDifferenceValue -= (seconds - this.timeStandardValue);
+                } else {
+                    timeItem.classList.add('equal');
+                }
+                
+                timeItem.textContent = seconds;
+                
+                // Add to the end (left side)
+                timeBar.appendChild(timeItem);
+
+                // Update the time difference display
+                this.updateRemainingTimePerQuestion();
+
+                // Store the time
+                this.questionTimes.push(seconds);
             },
         };
 
