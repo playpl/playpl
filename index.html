@@ -2420,12 +2420,12 @@
                             const correct = question.stats.correct || 0;
                             const incorrect = attempts - correct;
                             
-                            // Base requirement: 5 correct answers for a question with no errors
-                            const baseRequirement = 5;
+                            // Base requirement: 4 correct answers for a question with no errors
+                            const baseRequirement = 4;
                             
                             // Calculate required correct answers based on number of incorrect answers
-                            // For each incorrect answer, we add 4 more required correct answers
-                            const requiredCorrect = baseRequirement + (incorrect * 4);
+                            // For each incorrect answer, we add 3 more required correct answers
+                            const requiredCorrect = baseRequirement + (incorrect * 3);
                             
                             // If we've already met or exceeded the requirement, no more needed
                             if (correct >= requiredCorrect) {
@@ -2748,12 +2748,12 @@
 
                 if (attempts === 0) return 0;
 
-                // Base requirement: 5 correct answers for a question with no errors
-                const baseRequirement = 5;
+                // Base requirement: 4 correct answers for a question with no errors
+                const baseRequirement = 4;
                 
                 // Calculate required correct answers based on number of incorrect answers
-                // For each incorrect answer, we add 4 more required correct answers
-                const requiredCorrect = baseRequirement + (incorrect * 4);
+                // For each incorrect answer, we add 3 more required correct answers
+                const requiredCorrect = baseRequirement + (incorrect * 3);
                 
                 // If we haven't reached the minimum required correct answers
                 if (correct < requiredCorrect) {
