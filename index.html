@@ -2005,6 +2005,11 @@
                 </label>
                 
                 <label class="checkbox-option">
+                    <input type="checkbox" id="excludeMarked">
+                    <span>استثناء الأسئلة المعلّمة</span>
+                </label>
+                
+                <label class="checkbox-option">
                     <input type="checkbox" id="autoAdvance">
                     <span>الانتقال التلقائي للسؤال التالي</span>
                 </label>
@@ -2498,6 +2503,26 @@
                 
                 document.getElementById('markedOnly').addEventListener('change', (e) => {
                     this.markedOnly = e.target.checked;
+                    
+                    // Disable excludeMarked checkbox if markedOnly is checked (they're mutually exclusive)
+                    if (e.target.checked) {
+                        document.getElementById('excludeMarked').checked = false;
+                        document.getElementById('excludeMarked').disabled = true;
+                    } else {
+                        document.getElementById('excludeMarked').disabled = false;
+                    }
+                });
+                
+                document.getElementById('excludeMarked').addEventListener('change', (e) => {
+                    this.excludeMarked = e.target.checked;
+                    
+                    // Disable markedOnly checkbox if excludeMarked is checked (they're mutually exclusive)
+                    if (e.target.checked) {
+                        document.getElementById('markedOnly').checked = false;
+                        document.getElementById('markedOnly').disabled = true;
+                    } else {
+                        document.getElementById('markedOnly').disabled = false;
+                    }
                 });
                 
                 document.getElementById('autoAdvance').addEventListener('change', (e) => {
@@ -2564,6 +2589,7 @@
                 this.questionCount = parseInt(document.getElementById('questionCount').value) || 20;
                 this.testDuration = parseInt(document.getElementById('testDuration').value) || 30;
                 this.markedOnly = document.getElementById('markedOnly').checked;
+                this.excludeMarked = document.getElementById('excludeMarked').checked;
                 this.autoAdvance = document.getElementById('autoAdvance').checked;
                 this.freeRunnerMode = document.getElementById('freeRunnerMode').checked;
                 this.maxMasteryLimit = parseInt(document.getElementById('maxMasteryLimit').value) || 100;
@@ -2642,7 +2668,7 @@
                 const snapshot = await query.get();
                 let allQuestions = [];
                 
-                // Step 2: Apply mastery limit filter
+                // Step 2: Apply mastery limit filter and exclude marked questions if needed
                 snapshot.forEach(doc => {
                     const data = doc.data();
                     const stats = data.stats || {};
@@ -2651,6 +2677,11 @@
                     stats.marked = stats.marked || false;
                     
                     const masteryPercent = this.calculateMastery(stats);
+                    
+                    // Skip marked questions if excludeMarked is true
+                    if (this.excludeMarked && stats.marked) {
+                        return;
+                    }
                     
                     // Only include questions with mastery below or equal to the limit
                     if (masteryPercent <= this.maxMasteryLimit) {
