@@ -2261,17 +2261,25 @@
                     // Fetch all questions from Firebase
                     const snapshot = await db.collection('questions').get();
                     const masteryGroups = {};
+                    const markedGroups = {};
 
                     // Initialize all possible percentages from 0 to 100
                     for (let i = 0; i <= 100; i++) {
                         masteryGroups[i] = 0;
+                        markedGroups[i] = 0;
                     }
 
                     // Process each question
                     snapshot.forEach(doc => {
                         const question = doc.data();
-                        const masteryPercent = Math.round(this.calculateMastery(question.stats));
+                        const stats = question.stats || {};
+                        const masteryPercent = Math.round(this.calculateMastery(stats));
                         masteryGroups[masteryPercent]++;
+                        
+                        // Count marked questions separately
+                        if (stats.marked) {
+                            markedGroups[masteryPercent]++;
+                        }
                     });
 
                     const ctx = document.getElementById('masteryDistributionChart').getContext('2d');
@@ -2283,6 +2291,7 @@
                     // Create arrays for labels and data
                     const labels = Object.keys(masteryGroups);
                     const data = Object.values(masteryGroups);
+                    const markedData = Object.values(markedGroups);
 
                     // Find max value for setting appropriate step size
                     const maxValue = Math.max(...data);
@@ -2294,26 +2303,59 @@
                         return `hsl(${hue}, 80%, 50%)`;
                     });
 
+                    // Create arrays for unmarked questions (total - marked)
+                    const unmarkedData = data.map((total, index) => total - markedData[index]);
+                    
                     this.masteryChart = new Chart(ctx, {
                         type: 'bar',
                         data: {
                             labels: labels.map(l => l + '%'),
-                            datasets: [{
-                                label: 'عدد الأسئلة',
-                                data: data,
-                                backgroundColor: colors,
-                                borderWidth: 0,
-                                borderRadius: 5,
-                                barPercentage: 1,
-                                categoryPercentage: 1
-                            }]
+                            datasets: [
+                                {
+                                    label: 'الأسئلة غير المعلّمة',
+                                    data: unmarkedData,
+                                    backgroundColor: colors,
+                                    borderWidth: 0,
+                                    borderRadius: {
+                                        topLeft: 0,
+                                        topRight: 0,
+                                        bottomLeft: 5,
+                                        bottomRight: 5
+                                    },
+                                    barPercentage: 0.9,
+                                    categoryPercentage: 1,
+                                    stack: 'Stack 0'
+                                },
+                                {
+                                    label: 'الأسئلة المعلّمة',
+                                    data: markedData,
+                                    backgroundColor: 'rgba(255, 215, 0, 0.8)', // Yellow color for marked questions
+                                    borderWidth: 0,
+                                    borderRadius: {
+                                        topLeft: 5,
+                                        topRight: 5,
+                                        bottomLeft: 0,
+                                        bottomRight: 0
+                                    },
+                                    barPercentage: 0.9,
+                                    categoryPercentage: 1,
+                                    stack: 'Stack 0'
+                                }
+                            ]
                         },
                         options: {
                             responsive: true,
                             maintainAspectRatio: false,
                             plugins: {
                                 legend: {
-                                    display: false
+                                    display: true,
+                                    position: 'top',
+                                    labels: {
+                                        color: 'white',
+                                        font: {
+                                            size: 12
+                                        }
+                                    }
                                 },
                                 tooltip: {
                                     callbacks: {
@@ -2322,7 +2364,27 @@
                                         },
                                         label: function(context) {
                                             const count = context.raw;
-                                            return `عدد الأسئلة: ${count}`;
+                                            const datasetLabel = context.dataset.label;
+                                            return `${datasetLabel}: ${count}`;
+                                        },
+                                        footer: function(tooltipItems) {
+                                            // Find the unmarked and marked datasets
+                                            let unmarkedQuestions = 0;
+                                            let markedQuestions = 0;
+                                            
+                                            tooltipItems.forEach(item => {
+                                                if (item.dataset.label === 'الأسئلة غير المعلّمة') {
+                                                    unmarkedQuestions = item.parsed.y;
+                                                } else if (item.dataset.label === 'الأسئلة المعلّمة') {
+                                                    markedQuestions = item.parsed.y;
+                                                }
+                                            });
+                                            
+                                            const totalQuestions = unmarkedQuestions + markedQuestions;
+                                            const markedPercentage = totalQuestions > 0 ? 
+                                                Math.round((markedQuestions / totalQuestions) * 100) : 0;
+                                            
+                                            return `المجموع: ${totalQuestions} | نسبة المعلّمة: ${markedPercentage}%`;
                                         }
                                     }
                                 }
@@ -2684,7 +2746,8 @@
                     }
                     
                     // Only include questions with mastery below or equal to the limit
-                    if (masteryPercent <= this.maxMasteryLimit) {
+                    if (stats.marked || masteryPercent <= this.maxMasteryLimit) {
+
                         allQuestions.push({
                             id: doc.id,
                             ...data,
@@ -3006,52 +3069,85 @@
             
             setQuestionMastery() {
                 const question = this.quizData[this.currentQuestion];
+                if (!question || !question.id) {
+                    console.error("Current question or question ID is undefined in setQuestionMastery.");
+                    this.showCustomAlert({
+                        icon: '❌',
+                        title: 'خطأ',
+                        content: 'لا يمكن تحديث الإتقان لسؤال غير محدد.',
+                        confirmText: 'حسناً',
+                        showCancel: false
+                    });
+                    return;
+                }
                 const questionId = question.id;
                 
-                // Show a brief animation on the button to indicate it's working
                 const masteryBtn = document.querySelector('#masteryShortcutBtn');
-                masteryBtn.classList.add('active');
-                
-                // Set Firebase values for mastery (incorrect: 0, correct: 5)
+                if (masteryBtn) masteryBtn.classList.add('active');
+
+                // Set Firebase values for initial mastery state (e.g., 5 attempts, 5 correct for 100%)
                 db.collection('questions').doc(questionId).update({
                     'stats.attempts': 5,
                     'stats.correct': 5
                 }).then(() => {
-                    // Update local data
-                    question.stats.attempts = 5;
-                    question.stats.correct = 5;
-                    question.masteryPercent = 100;
-                    
-                    // Update UI
+                    // Update local stats to reflect this initial mastery set
+                    if (question.stats) {
+                        question.stats.attempts = 5;
+                        question.stats.correct = 5;
+                    } else {
+                        question.stats = { attempts: 5, correct: 5, marked: false }; // Initialize if not present
+                    }
+                    // The masteryPercent will be definitively set after handleAnswer completes
+
                     const masteryIndicator = document.querySelector('.mastery-indicator');
                     if (masteryIndicator && !masteryIndicator.classList.contains('marked')) {
+                         // Temporarily show 100% here, handleAnswer will re-evaluate based on final stats.
                         masteryIndicator.textContent = `الإتقان: 100%`;
                     }
                     
-                    // Update mastery distribution chart
+                    // Update the mastery distribution chart to reflect the change for this question
                     this.updateMasteryDistributionChart();
-                    
-                    // Show success feedback
+
+                    // Now, also handle it as a correct answer submission.
+                    // This will update UI, streak, and increment stats further (e.g., to 6/6),
+                    // and then recalculate masteryPercent based on those final stats.
+                    // It's important that question.correctIndex is valid.
+                    if (typeof question.correctIndex !== 'undefined') {
+                        this.handleAnswer(question.correctIndex, true);
+                    } else {
+                        console.error("Correct index is undefined for the current question.", question);
+                        // Fallback or error message if correctIndex is missing
+                        this.showCustomAlert({
+                            icon: '❌',
+                            title: 'خطأ في البيانات',
+                            content: 'لم يتم تحديد الإجابة الصحيحة لهذا السؤال.',
+                            confirmText: 'حسناً',
+                            showCancel: false
+                        });
+                    }
+
                     this.showCustomAlert({
                         icon: '✓',
                         title: 'تم تعيين الإتقان',
-                        content: 'تم تعيين هذا السؤال كمتقن بنجاح',
+                        content: 'تم تعيين هذا السؤال كمتقن والإجابة عليه بشكل صحيح.',
                         confirmText: 'حسناً',
-                        showCancel: false
+                        showCancel: false,
+                        autoHideDelay: 2000 // Shorter delay for this combined action
                     });
                     
-                    // Remove animation
-                    setTimeout(() => {
-                        masteryBtn.classList.remove('active');
-                    }, 500);
+                    if (masteryBtn) {
+                        setTimeout(() => {
+                            masteryBtn.classList.remove('active');
+                        }, 500);
+                    }
                 }).catch(error => {
                     console.error('Error updating mastery status:', error);
-                    masteryBtn.classList.remove('active');
+                    if (masteryBtn) masteryBtn.classList.remove('active');
                     
                     this.showCustomAlert({
                         icon: '❌',
                         title: 'خطأ',
-                        content: 'حدث خطأ أثناء تعيين الإتقان',
+                        content: 'حدث خطأ أثناء تعيين الإتقان: ' + error.message,
                         confirmText: 'حسناً',
                         showCancel: false
                     });
